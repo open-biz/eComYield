@@ -96,16 +96,17 @@ export default function HeroSection({ onConnectStore, onEarnYield }: HeroSection
           className="mt-16 flex flex-wrap justify-center gap-6"
         >
           <div className="text-center px-8 py-6 bg-red-500/10 border border-red-500/30 rounded-2xl">
-            <div className="text-4xl font-bold text-red-400 mb-2">9-23</div>
-            <div className="text-slate-400">Days to Get Paid</div>
-            <div className="text-red-300 text-xs mt-1">(7-21 days Amazon + 1-2 days bank)</div>
+            <div className="text-4xl font-bold text-red-400 mb-2">9-23 Days</div>
+            <div className="text-slate-400">Plus Bank Hours 9-5</div>
+            <div className="text-red-300 text-xs mt-1">For larger deposits, banks close at 5pm</div>
           </div>
           <div className="flex items-center text-slate-500">
             <span className="text-2xl">→</span>
           </div>
           <div className="text-center px-8 py-6 bg-green-500/10 border border-green-500/30 rounded-2xl">
-            <div className="text-4xl font-bold text-green-400 mb-2">Same Day</div>
-            <div className="text-slate-400">With eComYield</div>
+            <div className="text-4xl font-bold text-green-400 mb-2">24/7/365</div>
+            <div className="text-slate-400">Your Money, Anytime</div>
+            <div className="text-green-300 text-xs mt-1">No banking hours, instant access</div>
           </div>
         </motion.div>
 
