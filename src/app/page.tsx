@@ -7,6 +7,7 @@ import EasySetup from "@/components/easy-setup";
 import YieldShowcase from "@/components/yield-showcase";
 import CompetitiveLandscape from "@/components/competitive-landscape";
 import MarketSection from "@/components/market-section";
+import CTASection from "@/components/cta-section";
 import Footer from "@/components/footer";
 import DemoConnect from "@/components/demo-connect";
 import SellerDashboard from "@/components/seller-dashboard";
@@ -50,6 +51,13 @@ export default function Home() {
       <YieldShowcase />
       <MarketSection />
       <CompetitiveLandscape />
+      <CTASection 
+        onConnectStore={() => setIsDemoModalOpen(true)}
+        onEarnYield={() => {
+          const yieldSection = document.getElementById("yield");
+          yieldSection?.scrollIntoView({ behavior: "smooth" });
+        }}
+      />
       <Footer />
 
       {/* Demo Connect Modal */}
