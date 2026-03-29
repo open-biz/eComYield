@@ -44,6 +44,25 @@ export default function YieldShowcase() {
           </div>
         </motion.div>
 
+        {/* Fee Breakdown */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-12 bg-orange-500/10 border border-orange-500/20 rounded-2xl p-6"
+        >
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div>
+              <div className="text-orange-400 font-semibold mb-2">2% Daily Fee on Cash Forwarded</div>
+              <div className="text-slate-400 text-sm">Sellers pay 2% of the advance amount — not interest, just a small fee for instant liquidity.</div>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-bold text-white">17x</div>
+              <div className="text-slate-500 text-xs">Capital Turns/Year</div>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -134,6 +153,34 @@ export default function YieldShowcase() {
               </div>
             </div>
           </div>
+        </motion.div>
+
+        {/* How Yield Works */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-12 bg-slate-900/30 border border-slate-800 rounded-2xl p-8"
+        >
+          <h3 className="text-xl font-semibold text-white mb-6 text-center">How Your 24-48% APY is Generated</h3>
+          <div className="space-y-4">
+            {[
+              { step: "Day 1", action: "Seller gets $8,000 advance", fee: "$160 fee" },
+              { step: "Day 21", action: "Amazon settles, pool repaid", yield: "+2% return" },
+              { step: "Repeat", action: "Same $1,000 deployed 17x/year", total: "34% APY" },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-4 p-4 bg-slate-800/30 rounded-xl">
+                <div className="w-20 text-cyan-400 font-semibold">{item.step}</div>
+                <div className="flex-1 text-slate-300">{item.action}</div>
+                <div className={item.fee ? "text-orange-400" : item.yield ? "text-green-400" : "text-green-400 font-bold"}>
+                  {item.fee || item.yield || item.total}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-slate-400 text-sm text-center mt-4">
+            2% fee × 17 capital turns/year = <span className="text-green-400 font-semibold">34% gross APY</span>. After protocol fees: <span className="text-white font-semibold">24-48% net APY</span>.
+          </p>
         </motion.div>
 
         {/* Why this yield is real */}
