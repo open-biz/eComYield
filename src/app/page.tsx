@@ -6,6 +6,7 @@ import HeroSection from "@/components/hero-section";
 import EasySetup from "@/components/easy-setup";
 import YieldShowcase from "@/components/yield-showcase";
 import CompetitiveLandscape from "@/components/competitive-landscape";
+import MarketSection from "@/components/market-section";
 import Footer from "@/components/footer";
 import DemoConnect from "@/components/demo-connect";
 import SellerDashboard from "@/components/seller-dashboard";
@@ -47,6 +48,7 @@ export default function Home() {
       />
       <EasySetup />
       <YieldShowcase />
+      <MarketSection />
       <CompetitiveLandscape />
       <Footer />
 
