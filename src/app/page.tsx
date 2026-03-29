@@ -7,6 +7,8 @@ import HowItWorks from "@/components/how-it-works";
 import EasySetup from "@/components/easy-setup";
 import YieldShowcase from "@/components/yield-showcase";
 import CompetitiveLandscape from "@/components/competitive-landscape";
+import FAQSection from "@/components/faq-section";
+import SecuritySection from "@/components/security-section";
 import Footer from "@/components/footer";
 import DemoConnect from "@/components/demo-connect";
 import SellerDashboard from "@/components/seller-dashboard";
@@ -49,7 +51,9 @@ export default function Home() {
       <HowItWorks />
       <EasySetup />
       <YieldShowcase />
+      <SecuritySection />
       <CompetitiveLandscape />
+      <FAQSection />
       <Footer />
 
       {/* Demo Connect Modal */}
