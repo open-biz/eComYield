@@ -52,8 +52,8 @@ export default function HeroSection({ onConnectStore, onEarnYield }: HeroSection
           transition={{ duration: 0.5, delay: 0.1 }}
           className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight"
         >
-          Get Paid <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Today</span>
-          <br />Not in 21 Days
+          Amazon Holds Your
+          <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">Money for 7-21 Days</span>
         </motion.h1>
 
         {/* Subheadline */}
@@ -63,7 +63,7 @@ export default function HeroSection({ onConnectStore, onEarnYield }: HeroSection
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-xl md:text-2xl text-slate-300 mb-10 max-w-3xl mx-auto"
         >
-          Turn your Amazon receivables into instant cash. Up to 80% of your daily net sales — advanced today, repaid when Amazon settles.
+          We advance you up to <span className="text-cyan-400 font-semibold">80% of your daily sales</span> the same day Amazon confirms the order — no waiting 7-21 days for settlement.
         </motion.p>
 
         {/* CTA Buttons */}
@@ -88,24 +88,24 @@ export default function HeroSection({ onConnectStore, onEarnYield }: HeroSection
           </button>
         </motion.div>
 
-        {/* Stats */}
+        {/* The Problem - Solution highlight */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8"
+          className="mt-16 flex flex-wrap justify-center gap-6"
         >
-          {[
-            { label: "Sellers Funded", value: "10K+" },
-            { label: "Avg. Advance", value: "$50K" },
-            { label: "Settlement", value: "Same Day" },
-            { label: "APY for LPs", value: "24-48%" },
-          ].map((stat, i) => (
-            <div key={i} className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-white mb-1">{stat.value}</div>
-              <div className="text-sm text-slate-400">{stat.label}</div>
-            </div>
-          ))}
+          <div className="text-center px-8 py-6 bg-red-500/10 border border-red-500/30 rounded-2xl">
+            <div className="text-4xl font-bold text-red-400 mb-2">7-21</div>
+            <div className="text-slate-400">Days Amazon Holds Funds</div>
+          </div>
+          <div className="flex items-center text-slate-500">
+            <span className="text-2xl">→</span>
+          </div>
+          <div className="text-center px-8 py-6 bg-green-500/10 border border-green-500/30 rounded-2xl">
+            <div className="text-4xl font-bold text-green-400 mb-2">Same Day</div>
+            <div className="text-slate-400">With eComYield</div>
+          </div>
         </motion.div>
 
         {/* Features pills */}
