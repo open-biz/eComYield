@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Shield, Lock, Eye, Server, CheckCircle2, Audit, BugBounty } from "lucide-react";
+import { Shield, Lock, Eye, Server, CheckCircle2, FileCheck, Search } from "lucide-react";
 
 const features = [
   {
@@ -86,7 +86,7 @@ export default function SecuritySection() {
           className="bg-slate-800/30 border border-slate-700 rounded-2xl p-8"
         >
           <div className="flex items-center gap-3 mb-6">
-            <Audit className="w-6 h-6 text-cyan-400" />
+            <FileCheck className="w-6 h-6 text-cyan-400" />
             <h3 className="text-xl font-semibold text-white">Security Audits</h3>
           </div>
           <div className="grid md:grid-cols-3 gap-4">
@@ -112,7 +112,7 @@ export default function SecuritySection() {
           {[
             { icon: CheckCircle2, text: "KYC via Amazon Data" },
             { icon: Lock, text: "Receivables Factoring License" },
-            { icon: BugBounty, text: "Bug Bounty Program" }
+            { icon: Search, text: "Bug Bounty Program" }
           ].map((item, i) => (
             <div key={i} className="flex items-center gap-3 p-4 bg-slate-800/30 rounded-xl">
               <item.icon className="w-5 h-5 text-green-400" />
