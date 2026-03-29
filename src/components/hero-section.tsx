@@ -53,7 +53,7 @@ export default function HeroSection({ onConnectStore, onEarnYield }: HeroSection
           className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight"
         >
           Amazon Holds Your
-          <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">Money for 7-21 Days</span>
+          <br /><span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">Money 9-23 Days</span>
         </motion.h1>
 
         {/* Subheadline */}
@@ -96,8 +96,9 @@ export default function HeroSection({ onConnectStore, onEarnYield }: HeroSection
           className="mt-16 flex flex-wrap justify-center gap-6"
         >
           <div className="text-center px-8 py-6 bg-red-500/10 border border-red-500/30 rounded-2xl">
-            <div className="text-4xl font-bold text-red-400 mb-2">7-21</div>
-            <div className="text-slate-400">Days Amazon Holds Funds</div>
+            <div className="text-4xl font-bold text-red-400 mb-2">9-23</div>
+            <div className="text-slate-400">Days to Get Paid</div>
+            <div className="text-red-300 text-xs mt-1">(7-21 days Amazon + 1-2 days bank)</div>
           </div>
           <div className="flex items-center text-slate-500">
             <span className="text-2xl">→</span>
