@@ -86,7 +86,7 @@ export default function HeroSection({ onConnectStore }: HeroSectionProps) {
           onClick={() => router.push("/vaults")}
           className="inline-flex items-center gap-3 bg-transparent text-[#1C1B18] border-2 border-[#1C1B18] px-10 py-6 text-lg font-medium rounded-none hover:bg-[#EBE8DE] transition-colors"
         >
-          View RWA Vaults
+          Earn Yield
           <ArrowRight className="w-5 h-5" />
         </button>
       </ScrollReveal>

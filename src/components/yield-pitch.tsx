@@ -29,7 +29,7 @@ export default function YieldPitch() {
               verifiable, programmatic Amazon cash flows.
             </p>
             <button className="group inline-flex items-center gap-3 bg-transparent text-[#1C1B18] border-2 border-[#1C1B18] px-8 py-5 text-lg font-medium rounded-none hover:bg-[#EBE8DE] transition-colors">
-              View RWA Vaults
+              Earn Yield
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
