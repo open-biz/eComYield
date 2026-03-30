@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 
 export default function Preloader({ children }: { children: React.ReactNode }) {
@@ -36,16 +37,17 @@ export default function Preloader({ children }: { children: React.ReactNode }) {
         }`}
       >
         <div className="flex flex-col items-center gap-6">
-          {/* Logo mark */}
-          <div className="w-16 h-16 bg-[#0A2E20] flex items-center justify-center">
-            <span className="text-[#F5F3EC] font-bold text-2xl">e</span>
-          </div>
-          {/* Brand name */}
+          {/* Logo */}
+          <Image 
+            src="/eComYield-logo.jpeg" 
+            alt="eComYield" 
+            width={96}
+            height={96}
+            className="object-contain"
+            priority
+          />
+          {/* Brand tagline */}
           <div className="flex items-center gap-2">
-            <span className="text-[#1C1B18] font-bold text-xl tracking-tight">
-              eComYield
-            </span>
-            <span className="text-[#1C1B18]/30 text-xs">|</span>
             <span className="text-[#1C1B18]/50 text-sm font-medium">
               Advance Seller Payouts
             </span>

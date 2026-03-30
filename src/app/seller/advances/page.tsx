@@ -13,6 +13,7 @@ import {
   DollarSign,
   ChevronDown,
 } from "lucide-react";
+import { SellerBreadcrumb } from "@/components/breadcrumb";
 
 interface Advance {
   id: string;
@@ -98,17 +99,10 @@ export default function SellerAdvances() {
     <div className="max-w-6xl">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <button
-            onClick={() => window.history.back()}
-            className="text-[#1C1B18]/40 hover:text-[#1C1B18] transition-colors"
-          >
-            <ArrowLeft size={18} />
-          </button>
-          <h1 className="text-3xl font-bold text-[#1C1B18] tracking-tight">
-            Advances
-          </h1>
-        </div>
+        <SellerBreadcrumb items={[{ label: "Advances", href: "/seller/advances" }]} />
+        <h1 className="text-3xl font-bold text-[#1C1B18] tracking-tight">
+          Advances
+        </h1>
         <p className="text-[#1C1B18]/50">
           View and manage your cash advances
         </p>

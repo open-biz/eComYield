@@ -11,6 +11,7 @@ import {
   CalendarClock,
   Wallet,
 } from "lucide-react";
+import { SellerBreadcrumb } from "@/components/breadcrumb";
 
 interface DashboardData {
   availableAdvance: number;
@@ -92,6 +93,7 @@ export default function SellerDashboard() {
 
   return (
     <div className="max-w-5xl">
+      <SellerBreadcrumb items={[{ label: "Dashboard" }]} />
       {/* Header */}
       <div className="mb-10">
         <p className="text-sm text-[#1C1B18]/50 font-medium uppercase tracking-wider mb-2">

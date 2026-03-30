@@ -31,7 +31,7 @@ export default function Navbar({ onConnectStore, onConnectWallet }: NavbarProps)
             onClick={onConnectWallet}
             className="bg-transparent text-[#F5F3EC] border border-[#F5F3EC] px-6 py-3 text-sm font-medium rounded-none hover:bg-[#F5F3EC]/10 transition-colors"
           >
-            Connect Wallet
+            View RWA Vaults
           </button>
         </div>
 
@@ -58,7 +58,7 @@ export default function Navbar({ onConnectStore, onConnectWallet }: NavbarProps)
               onClick={() => { onConnectWallet?.(); setIsOpen(false); }}
               className="w-full bg-transparent text-[#F5F3EC] border border-[#F5F3EC] px-6 py-3 text-sm font-medium rounded-none"
             >
-              Connect Wallet
+              View RWA Vaults
             </button>
           </div>
         </div>

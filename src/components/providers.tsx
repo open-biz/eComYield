@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   RainbowKitProvider,
   lightTheme,
+  connectorsForWallets,
 } from "@rainbow-me/rainbowkit";
 import { WagmiProvider, createConfig, http } from "wagmi";
 import {
@@ -14,9 +15,25 @@ import {
   arbitrum,
 } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { injected } from "wagmi/connectors";
+import { metaMaskWallet, injectedWallet } from "@rainbow-me/rainbowkit/wallets";
+import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
+import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
+import { ConnectionProvider, WalletProvider as SolanaWalletProvider } from "@solana/wallet-adapter-react";
+import { WalletModalProvider as SolanaWalletModalProvider } from "@solana/wallet-adapter-react-ui";
+import { clusterApiUrl } from "@solana/web3.js";
 
 const queryClient = new QueryClient();
+
+// Only use injected wallets (browser extensions like MetaMask) - no WalletConnect
+const connectors = connectorsForWallets(
+  [
+    {
+      groupName: "Wallets",
+      wallets: [metaMaskWallet, injectedWallet],
+    },
+  ],
+  { appName: "eComYield", projectId: "ecomyield" }
+);
 
 const metadata = {
   name: "eComYield",
@@ -27,9 +44,7 @@ const metadata = {
 
 const config = createConfig({
   chains: [mainnet, sepolia, polygon, optimism, arbitrum],
-  connectors: [
-    injected(),
-  ],
+  connectors,
   transports: {
     [mainnet.id]: http(),
     [sepolia.id]: http(),
@@ -38,6 +53,30 @@ const config = createConfig({
     [arbitrum.id]: http(),
   },
 });
+
+// Solana wallet configuration
+const SolanaWalletProviderWrapper = ({ children }: { children: React.ReactNode }) => {
+  const network = WalletAdapterNetwork.Mainnet;
+  const endpoint = clusterApiUrl(network);
+  
+  const wallets = React.useMemo(
+    () => [
+      new PhantomWalletAdapter(),
+      new SolflareWalletAdapter(),
+    ],
+    []
+  );
+
+  return (
+    <ConnectionProvider endpoint={endpoint}>
+      <SolanaWalletProvider wallets={wallets} autoConnect>
+        <SolanaWalletModalProvider>
+          {children}
+        </SolanaWalletModalProvider>
+      </SolanaWalletProvider>
+    </ConnectionProvider>
+  );
+};
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -55,7 +94,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
             learnMoreUrl: "https://ecomyield.com/docs",
           }}
         >
-          {children}
+          <SolanaWalletProviderWrapper>
+            {children}
+          </SolanaWalletProviderWrapper>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

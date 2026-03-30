@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
 import { ScrollReveal } from "@/components/scroll-animation";
-import { ConnectWallet } from "@/components/connect-button";
+import { useRouter } from "next/navigation";
 
 interface HeroSectionProps {
   onConnectStore?: () => void;
@@ -12,6 +12,7 @@ interface HeroSectionProps {
 const headlineWords = ["Money 9–23 Days.", "Cash Flow Gap.", "Sales Cycle.", "Working Capital."];
 
 export default function HeroSection({ onConnectStore }: HeroSectionProps) {
+  const router = useRouter();
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isTyping, setIsTyping] = useState(true);
@@ -81,7 +82,13 @@ export default function HeroSection({ onConnectStore }: HeroSectionProps) {
           Connect Amazon Store
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </button>
-        <ConnectWallet variant="secondary" />
+        <button
+          onClick={() => router.push("/vaults")}
+          className="inline-flex items-center gap-3 bg-transparent text-[#1C1B18] border-2 border-[#1C1B18] px-10 py-6 text-lg font-medium rounded-none hover:bg-[#EBE8DE] transition-colors"
+        >
+          View RWA Vaults
+          <ArrowRight className="w-5 h-5" />
+        </button>
       </ScrollReveal>
     </section>
   );

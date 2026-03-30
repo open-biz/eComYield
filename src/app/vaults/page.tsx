@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount } from "wagmi";
+import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react";
 import {
   Vault,
   TrendingUp,
@@ -10,7 +10,20 @@ import {
   CircleDollarSign,
   Info,
 } from "lucide-react";
-import { ConnectWallet } from "@/components/connect-button";
+import { VaultsBreadcrumb } from "@/components/breadcrumb";
+import { SolanaConnectButton } from "@/components/solana-connect-button";
+import { DepositModal } from "@/components/deposit-modal";
+import { WithdrawModal } from "@/components/withdraw-modal";
+import { TransactionHistory } from "@/components/transaction-history";
+
+interface Transaction {
+  id: string;
+  type: "deposit" | "withdraw" | "yield";
+  amount: number;
+  timestamp: string;
+  status: "completed" | "pending";
+  txHash?: string;
+}
 
 interface VaultData {
   vault: { name: string; status: string; epoch: number; epochTimeRemaining: string };
@@ -27,12 +40,15 @@ interface VaultData {
   parameters: { label: string; value: string }[];
   userPosition: { deposited: number | null; earnedYield: number | null; walletConnected: boolean };
   recentActivity: { action: string; amount: number; wallet: string; time: string }[];
+  userTransactions: Transaction[];
 }
 
 export default function VaultsPage() {
-  const { isConnected, address } = useAccount();
+  const { connected: isConnected, publicKey: address } = useSolanaWallet();
   const [data, setData] = useState<VaultData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
 
   useEffect(() => {
     // In production, pass wallet address to fetch user position
@@ -47,12 +63,22 @@ export default function VaultsPage() {
             earnedYield: 245.50,
             walletConnected: true,
           };
+          // Mock transaction history
+          data.userTransactions = [
+            { id: "1", type: "deposit", amount: 5000, timestamp: "2024-12-01T10:00:00Z", status: "completed", txHash: "5x9K2...3p2m" },
+            { id: "2", type: "yield", amount: 42.50, timestamp: "2024-12-08T00:00:00Z", status: "completed", txHash: "7m3H1...8k4n" },
+            { id: "3", type: "deposit", amount: 5000, timestamp: "2024-12-15T14:30:00Z", status: "completed", txHash: "2n8P4...5q7r" },
+            { id: "4", type: "yield", amount: 78.25, timestamp: "2024-12-22T00:00:00Z", status: "completed", txHash: "9s2T6...1v8w" },
+            { id: "5", type: "yield", amount: 124.75, timestamp: "2025-01-05T00:00:00Z", status: "completed", txHash: "4y7U9...2x3z" },
+          ];
+        } else {
+          data.userTransactions = [];
         }
         setData(data);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [isConnected, address]);
+  }, [isConnected]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) {
     return (
@@ -81,6 +107,7 @@ export default function VaultsPage() {
 
   return (
     <div className="space-y-10">
+      <VaultsBreadcrumb items={[{ label: "Markets", href: "/vaults" }]} />
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-2">
@@ -101,7 +128,10 @@ export default function VaultsPage() {
           </p>
         </div>
 
-        <button className="flex h-12 items-center gap-2 rounded-none bg-[#0A2E20] px-7 text-sm font-medium tracking-wide text-[#F5F3EC] transition-opacity hover:opacity-90">
+        <button
+          onClick={() => setShowDepositModal(true)}
+          className="flex h-12 items-center gap-2 rounded-none bg-[#0A2E20] px-7 text-sm font-medium tracking-wide text-[#F5F3EC] transition-opacity hover:opacity-90"
+        >
           <CircleDollarSign size={16} />
           Deposit USDC
         </button>
@@ -179,10 +209,21 @@ export default function VaultsPage() {
               <p className="text-lg font-bold text-[#0A2E20]">{data.userPosition.earnedYield ? formatCurrency(data.userPosition.earnedYield) : '—'} USDC</p>
             </div>
             {isConnected ? (
-              <button className="flex w-full items-center justify-center gap-2 rounded-none bg-[#0A2E20] px-5 py-3 text-sm font-medium text-[#F5F3EC] transition-colors hover:opacity-90">
-                <CircleDollarSign size={16} />
-                Deposit USDC
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowDepositModal(true)}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-none bg-[#0A2E20] px-5 py-3 text-sm font-medium text-[#F5F3EC] transition-colors hover:opacity-90"
+                >
+                  <CircleDollarSign size={16} />
+                  Deposit
+                </button>
+                <button
+                  onClick={() => setShowWithdrawModal(true)}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-none border-2 border-[#1C1B18] px-5 py-3 text-sm font-medium text-[#1C1B18] transition-colors hover:bg-[#EBE8DE]"
+                >
+                  Withdraw
+                </button>
+              </div>
             ) : (
               <>
                 <div className="flex items-start gap-2 rounded-sm bg-[#F5F3EC] p-3">
@@ -192,7 +233,7 @@ export default function VaultsPage() {
                     into this vault.
                   </p>
                 </div>
-                <ConnectWallet />
+                <SolanaConnectButton />
               </>
             )}
           </div>
@@ -234,6 +275,27 @@ export default function VaultsPage() {
           ))}
         </div>
       </div>
+
+      {/* User Transaction History - Only show when connected */}
+      {isConnected && data.userTransactions.length > 0 && (
+        <TransactionHistory transactions={data.userTransactions} />
+      )}
+
+      <DepositModal
+        isOpen={showDepositModal}
+        onClose={() => setShowDepositModal(false)}
+        vaultName={data.vault.name}
+        currentAPY={data.stats.currentAPY}
+        minDeposit={1000}
+      />
+
+      <WithdrawModal
+        isOpen={showWithdrawModal}
+        onClose={() => setShowWithdrawModal(false)}
+        vaultName={data.vault.name}
+        deposited={data.userPosition.deposited || 0}
+        earnedYield={data.userPosition.earnedYield || 0}
+      />
     </div>
   );
 }

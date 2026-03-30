@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { SolanaConnectButton } from "@/components/solana-connect-button";
 
 const navLinks = [
   { label: "Markets", href: "/vaults" },
@@ -23,9 +24,14 @@ export default function VaultsLayout({
       <nav className="fixed top-0 left-0 z-50 h-20 w-full border-b border-[#1C1B18]/10 bg-[#F5F3EC]">
         <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between px-6 lg:px-10">
           {/* Left: Brand */}
-          <Link href="/vaults" className="whitespace-nowrap text-lg font-bold tracking-tight text-[#1C1B18]">
-            eComYield | Institutional
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="text-2xl font-bold tracking-tight text-[#1C1B18] hover:opacity-70 transition-opacity">
+              ⌂
+            </Link>
+            <Link href="/vaults" className="whitespace-nowrap text-lg font-bold tracking-tight text-[#1C1B18]">
+              eComYield | Institutional
+            </Link>
+          </div>
 
           {/* Center: Desktop Nav Links */}
           <div className="hidden items-center gap-10 md:flex">
@@ -42,9 +48,9 @@ export default function VaultsLayout({
 
           {/* Right: Connect Wallet + Hamburger */}
           <div className="flex items-center gap-4">
-            <button className="hidden rounded-none bg-[#0A2E20] px-5 py-2.5 text-sm font-medium tracking-wide text-[#F5F3EC] transition-opacity hover:opacity-90 sm:block">
-              Connect Solana Wallet
-            </button>
+            <div className="hidden sm:block">
+              <SolanaConnectButton variant="primary" />
+            </div>
 
             {/* Mobile Hamburger */}
             <button
@@ -71,9 +77,9 @@ export default function VaultsLayout({
                   {link.label}
                 </Link>
               ))}
-              <button className="mt-2 w-full rounded-none bg-[#0A2E20] px-5 py-2.5 text-sm font-medium tracking-wide text-[#F5F3EC] transition-opacity hover:opacity-90 sm:hidden">
-                Connect Solana Wallet
-              </button>
+              <div className="mt-2 sm:hidden">
+                <SolanaConnectButton variant="primary" />
+              </div>
             </div>
           </div>
         )}

@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   Store,
+  LogOut,
 } from "lucide-react";
 
 const navItems = [
@@ -27,10 +28,10 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-6 py-8 flex items-center justify-between">
-        <span className="text-[#F5F3EC] font-bold text-lg tracking-tight">
+        <Link href="/" className="text-[#F5F3EC] font-bold text-lg tracking-tight hover:opacity-80 transition-opacity">
           eComYield <span className="font-normal text-[#F5F3EC]/60">|</span>{" "}
           <span className="font-medium text-sm text-[#F5F3EC]/80">Merchant</span>
-        </span>
+        </Link>
         {onClose && (
           <button
             onClick={onClose}
@@ -65,7 +66,7 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
       </nav>
 
       {/* Profile snippet */}
-      <div className="px-6 py-6 border-t border-[#F5F3EC]/10">
+      <div className="px-6 py-6 border-t border-[#F5F3EC]/10 space-y-3">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-sm bg-[#F5F3EC]/10 flex items-center justify-center">
             <Store size={16} className="text-[#F5F3EC]/70" strokeWidth={1.5} />
@@ -75,6 +76,16 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
             <p className="text-xs text-[#F5F3EC]/50">Seller Account</p>
           </div>
         </div>
+        <button
+          onClick={() => {
+            // In production, this would handle logout logic
+            window.location.href = "/";
+          }}
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#F5F3EC]/60 hover:text-[#F5F3EC] hover:bg-[#F5F3EC]/5 rounded-sm transition-colors"
+        >
+          <LogOut size={16} strokeWidth={1.5} />
+          Log Out
+        </button>
       </div>
     </div>
   );
@@ -121,10 +132,10 @@ export default function SellerLayout({
           >
             <Menu size={22} strokeWidth={1.5} />
           </button>
-          <span className="ml-4 font-bold text-sm text-[#1C1B18] tracking-tight">
+          <Link href="/" className="ml-4 font-bold text-sm text-[#1C1B18] tracking-tight hover:opacity-70 transition-opacity">
             eComYield <span className="font-normal text-[#1C1B18]/40">|</span>{" "}
             <span className="font-medium text-[#1C1B18]/60">Merchant</span>
-          </span>
+          </Link>
         </div>
 
         <div className="p-6 sm:p-10">{children}</div>
