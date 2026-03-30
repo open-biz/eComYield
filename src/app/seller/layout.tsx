@@ -13,6 +13,7 @@ import {
   Store,
   LogOut,
 } from "lucide-react";
+import Image from "next/image";
 
 const navItems = [
   { label: "Dashboard", href: "/seller", icon: LayoutDashboard },
@@ -28,9 +29,18 @@ function Sidebar({ onClose }: { onClose?: () => void }) {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-6 py-8 flex items-center justify-between">
-        <Link href="/" className="text-[#F5F3EC] font-bold text-lg tracking-tight hover:opacity-80 transition-opacity">
-          eComYield <span className="font-normal text-[#F5F3EC]/60">|</span>{" "}
-          <span className="font-medium text-sm text-[#F5F3EC]/80">Merchant</span>
+        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <Image 
+            src="/eComYield-logo.jpeg" 
+            alt="eComYield" 
+            width={32} 
+            height={32} 
+            className="object-contain"
+          />
+          <span className="text-[#F5F3EC] font-bold text-lg tracking-tight">
+            eComYield <span className="font-normal text-[#F5F3EC]/60">|</span>{" "}
+            <span className="font-medium text-sm text-[#F5F3EC]/80">Merchant</span>
+          </span>
         </Link>
         {onClose && (
           <button
@@ -132,9 +142,17 @@ export default function SellerLayout({
           >
             <Menu size={22} strokeWidth={1.5} />
           </button>
-          <Link href="/" className="ml-4 font-bold text-sm text-[#1C1B18] tracking-tight hover:opacity-70 transition-opacity">
-            eComYield <span className="font-normal text-[#1C1B18]/40">|</span>{" "}
-            <span className="font-medium text-[#1C1B18]/60">Merchant</span>
+          <Link href="/" className="ml-3 flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <Image 
+              src="/eComYield-logo.jpeg" 
+              alt="eComYield" 
+              width={28} 
+              height={28} 
+              className="object-contain"
+            />
+            <span className="font-bold text-sm text-[#1C1B18] tracking-tight">
+              Home
+            </span>
           </Link>
         </div>
 
