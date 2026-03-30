@@ -23,7 +23,7 @@ interface Transaction {
 }
 
 interface VaultData {
-  vault: { name: string; status: string; epoch: number; epochTimeRemaining: string };
+  vault: { name: string; status: string; epoch: number; epochEndTime: string; epochStartTime: string };
   stats: {
     totalValueLocked: number;
     tvlChange: number;
@@ -40,7 +40,6 @@ interface VaultData {
   userTransactions: Transaction[];
 }
 
-// Mock trusted by logos (would be real logos in production)
 const trustedByLogos = [
   { name: "Steakhouse", color: "#FF6B35" },
   { name: "Gauntlet", color: "#1E3A5F" },
@@ -55,18 +54,48 @@ export default function VaultsPage() {
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "advanced" | "activity">("overview");
+  const [timeRemaining, setTimeRemaining] = useState<string>("");
+
+  // Countdown timer
+  useEffect(() => {
+    if (!data?.vault?.epochEndTime) return;
+
+    const epochEndTime = data.vault.epochEndTime;
+
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const endTime = new Date(epochEndTime).getTime();
+      const diff = endTime - now;
+
+      if (diff <= 0) {
+        setTimeRemaining("0d 0h 0m 0s");
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      setTimeRemaining(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [data?.vault?.epochEndTime]);
 
   useEffect(() => {
     fetch("/api/vaults")
       .then((res) => res.json())
-      .then((data) => {
+      .then((apiData) => {
         if (isConnected && address) {
-          data.userPosition = {
+          apiData.userPosition = {
             deposited: 10000,
             earnedYield: 245.50,
             walletConnected: true,
           };
-          data.userTransactions = [
+          apiData.userTransactions = [
             { id: "1", type: "deposit", amount: 5000, timestamp: "2024-12-01T10:00:00Z", status: "completed", txHash: "5x9K2...3p2m" },
             { id: "2", type: "yield", amount: 42.50, timestamp: "2024-12-08T00:00:00Z", status: "completed", txHash: "7m3H1...8k4n" },
             { id: "3", type: "deposit", amount: 5000, timestamp: "2024-12-15T14:30:00Z", status: "completed", txHash: "2n8P4...5q7r" },
@@ -74,13 +103,13 @@ export default function VaultsPage() {
             { id: "5", type: "yield", amount: 124.75, timestamp: "2025-01-05T00:00:00Z", status: "completed", txHash: "4y7U9...2x3z" },
           ];
         } else {
-          data.userTransactions = [];
+          apiData.userTransactions = [];
         }
-        setData(data);
+        setData(apiData);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [isConnected]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isConnected]);
 
   if (loading) {
     return (
@@ -113,12 +142,11 @@ export default function VaultsPage() {
     <div className="space-y-6">
       <VaultsBreadcrumb items={[{ label: "Markets", href: "/vaults" }]} />
 
-      {/* Hero Section - Token Pair & Stats */}
+      {/* Hero Section */}
       <div className="rounded-xl border border-[#1C1B18]/10 bg-white p-6 lg:p-8">
         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-          {/* Left: Token Pair */}
+          {/* Token Pair */}
           <div className="flex items-center gap-4">
-            {/* Stacked Token Icons */}
             <div className="relative">
               <div className="flex h-[60px] w-[60px] items-center justify-center rounded-full border-2 border-[#F5F3EC] bg-gradient-to-br from-[#0A2E20] to-[#0A2E20]/80">
                 <span className="text-lg font-bold text-white">RWA</span>
@@ -130,17 +158,13 @@ export default function VaultsPage() {
 
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight text-[#1C1B18]">
-                  RWA / USDC
-                </h1>
-                <span className="rounded-full bg-[#0A2E20]/10 px-2 py-0.5 text-xs font-medium text-[#0A2E20]">
-                  86%
-                </span>
+                <h1 className="text-2xl font-bold tracking-tight text-[#1C1B18]">RWA / USDC</h1>
+                <span className="rounded-full bg-[#0A2E20]/10 px-2 py-0.5 text-xs font-medium text-[#0A2E20]">86%</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
                 {isConnected && address && (
                   <button className="flex items-center gap-2 rounded-md border border-[#1C1B18]/10 px-3 py-1.5 text-[#1C1B18] hover:bg-[#F5F3EC] transition-colors">
-                    <span className="font-mono text-xs">{address?.toString().slice(0, 6)}...{address?.toString().slice(-4)}</span>
+                    <span className="font-mono text-xs">{address.toString().slice(0, 6)}...{address.toString().slice(-4)}</span>
                   </button>
                 )}
                 <span className="inline-flex items-center gap-1 rounded-md bg-[#F5F3EC] px-2 py-1 text-xs font-medium text-[#1C1B18]/60">
@@ -151,74 +175,47 @@ export default function VaultsPage() {
             </div>
           </div>
 
-          {/* Right: Stats Grid */}
+          {/* Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
-            {/* Total Market Size */}
             <div className="space-y-2">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-medium uppercase tracking-wider text-[#1C1B18]/50">
-                  Total Market Size
-                </span>
+                <span className="text-xs font-medium uppercase tracking-wider text-[#1C1B18]/50">Total Market Size</span>
                 <Info size={14} className="text-[#1C1B18]/30" />
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold tracking-tight text-[#1C1B18]">
-                  {formatCompact(data.stats.totalValueLocked * 100)}
-                </span>
+                <span className="text-2xl font-bold tracking-tight text-[#1C1B18]">{formatCompact(data.stats.totalValueLocked * 100)}</span>
               </div>
-              <span className="text-xs text-[#1C1B18]/40">
-                {formatUSDC(data.stats.totalValueLocked * 100)}
-              </span>
+              <span className="text-xs text-[#1C1B18]/40">{formatUSDC(data.stats.totalValueLocked * 100)}</span>
             </div>
 
-            {/* Total Liquidity */}
             <div className="space-y-2">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-medium uppercase tracking-wider text-[#1C1B18]/50">
-                  Total Liquidity
-                </span>
+                <span className="text-xs font-medium uppercase tracking-wider text-[#1C1B18]/50">Total Liquidity</span>
                 <Info size={14} className="text-[#1C1B18]/30" />
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold tracking-tight text-[#1C1B18]">
-                  {formatCompact(data.stats.totalValueLocked)}
-                </span>
+                <span className="text-2xl font-bold tracking-tight text-[#1C1B18]">{formatCompact(data.stats.totalValueLocked)}</span>
               </div>
-              <span className="text-xs text-[#1C1B18]/40">
-                {formatUSDC(data.stats.totalValueLocked)}
-              </span>
+              <span className="text-xs text-[#1C1B18]/40">{formatUSDC(data.stats.totalValueLocked)}</span>
             </div>
 
-            {/* Rate / APY */}
             <div className="space-y-2">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-medium uppercase tracking-wider text-[#1C1B18]/50">
-                  Rate
-                </span>
+                <span className="text-xs font-medium uppercase tracking-wider text-[#1C1B18]/50">Rate</span>
                 <Info size={14} className="text-[#1C1B18]/30" />
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-bold tracking-tight text-[#0A2E20]">
-                  {data.stats.currentAPY}
-                </span>
+                <span className="text-3xl font-bold tracking-tight text-[#0A2E20]">{data.stats.currentAPY}</span>
                 <span className="text-lg font-semibold text-[#0A2E20]">%</span>
               </div>
               <span className="text-xs text-[#1C1B18]/40">APY</span>
             </div>
 
-            {/* Trusted By */}
             <div className="space-y-2">
-              <span className="text-xs font-medium uppercase tracking-wider text-[#1C1B18]/50">
-                Trusted By
-              </span>
+              <span className="text-xs font-medium uppercase tracking-wider text-[#1C1B18]/50">Trusted By</span>
               <div className="flex items-center gap-2">
                 {trustedByLogos.map((logo, i) => (
-                  <div
-                    key={i}
-                    className="flex h-8 w-8 items-center justify-center rounded-md border border-[#1C1B18]/10"
-                    style={{ backgroundColor: logo.color }}
-                    title={logo.name}
-                  >
+                  <div key={i} className="flex h-8 w-8 items-center justify-center rounded-md border border-[#1C1B18]/10" style={{ backgroundColor: logo.color }} title={logo.name}>
                     <span className="text-[10px] font-bold text-white">{logo.name.slice(0, 2)}</span>
                   </div>
                 ))}
@@ -235,13 +232,10 @@ export default function VaultsPage() {
               Institutional-grade yield from tokenized Amazon seller receivables. Senior tranche with first-loss protection.
             </p>
             <p className="text-xs text-[#1C1B18]/40">
-              Epoch {data.vault.epoch} · {data.vault.epochTimeRemaining} remaining
+              Epoch {data.vault.epoch} · {timeRemaining || "Loading..."} remaining
             </p>
           </div>
-          <button
-            onClick={() => setShowDepositModal(true)}
-            className="flex h-12 items-center gap-2 rounded-lg bg-[#0A2E20] px-6 text-sm font-semibold tracking-wide text-[#F5F3EC] transition-all hover:opacity-90 hover:shadow-lg"
-          >
+          <button onClick={() => setShowDepositModal(true)} className="flex h-12 items-center gap-2 rounded-lg bg-[#0A2E20] px-6 text-sm font-semibold tracking-wide text-[#F5F3EC] transition-all hover:opacity-90 hover:shadow-lg">
             <CircleDollarSign size={18} />
             Deposit USDC
           </button>
@@ -252,19 +246,9 @@ export default function VaultsPage() {
       <div className="border-b border-[#1C1B18]/10">
         <div className="flex gap-8">
           {(["overview", "advanced", "activity"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`relative py-4 text-sm font-medium capitalize transition-colors ${
-                activeTab === tab
-                  ? "text-[#1C1B18]"
-                  : "text-[#1C1B18]/50 hover:text-[#1C1B18]"
-              }`}
-            >
+            <button key={tab} onClick={() => setActiveTab(tab)} className={`relative py-4 text-sm font-medium capitalize transition-colors ${activeTab === tab ? "text-[#1C1B18]" : "text-[#1C1B18]/50 hover:text-[#1C1B18]"}`}>
               {tab}
-              {activeTab === tab && (
-                <div className="absolute bottom-0 left-0 h-0.5 w-full bg-[#0A2E20]" />
-              )}
+              {activeTab === tab && <div className="absolute bottom-0 left-0 h-0.5 w-full bg-[#0A2E20]" />}
             </button>
           ))}
         </div>
@@ -273,15 +257,11 @@ export default function VaultsPage() {
       {/* Tab Content */}
       {activeTab === "overview" && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Market Attributes */}
           <div className="lg:col-span-2 rounded-xl border border-[#1C1B18]/10 bg-white">
             <div className="border-b border-[#1C1B18]/10 px-6 py-4">
-              <h2 className="text-sm font-medium uppercase tracking-wider text-[#1C1B18]/50">
-                Market Attributes
-              </h2>
+              <h2 className="text-sm font-medium uppercase tracking-wider text-[#1C1B18]/50">Market Attributes</h2>
             </div>
             <div className="divide-y divide-[#1C1B18]/5">
-              {/* Collateral */}
               <div className="flex items-center justify-between px-6 py-4">
                 <span className="text-sm font-medium text-[#1C1B18]">Collateral</span>
                 <div className="flex items-center gap-3">
@@ -296,7 +276,6 @@ export default function VaultsPage() {
                   </button>
                 </div>
               </div>
-              {/* Loan */}
               <div className="flex items-center justify-between px-6 py-4">
                 <span className="text-sm font-medium text-[#1C1B18]">Loan</span>
                 <div className="flex items-center gap-3">
@@ -311,25 +290,19 @@ export default function VaultsPage() {
                   </button>
                 </div>
               </div>
-              {/* LTV */}
               <div className="flex items-center justify-between px-6 py-4">
                 <span className="text-sm font-medium text-[#1C1B18]">Max LTV</span>
                 <span className="text-sm font-semibold text-[#0A2E20]">75%</span>
               </div>
-              {/* Utilization */}
               <div className="flex items-center justify-between px-6 py-4">
                 <span className="text-sm font-medium text-[#1C1B18]">Utilization</span>
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-24 overflow-hidden rounded-full bg-[#1C1B18]/10">
-                    <div
-                      className="h-full rounded-full bg-[#0A2E20]"
-                      style={{ width: `${data.stats.poolUtilization}%` }}
-                    />
+                    <div className="h-full rounded-full bg-[#0A2E20]" style={{ width: `${data.stats.poolUtilization}%` }} />
                   </div>
                   <span className="text-sm font-medium text-[#1C1B18]">{data.stats.poolUtilization}%</span>
                 </div>
               </div>
-              {/* Active Advances */}
               <div className="flex items-center justify-between px-6 py-4">
                 <span className="text-sm font-medium text-[#1C1B18]">Active Advances</span>
                 <span className="text-sm font-semibold text-[#1C1B18]">{data.stats.activeAdvances}</span>
@@ -339,9 +312,7 @@ export default function VaultsPage() {
 
           {/* Your Position */}
           <div className="rounded-xl border border-[#1C1B18]/10 bg-white p-6">
-            <h2 className="mb-6 text-sm font-medium uppercase tracking-wider text-[#1C1B18]/50">
-              Your Position
-            </h2>
+            <h2 className="mb-6 text-sm font-medium uppercase tracking-wider text-[#1C1B18]/50">Your Position</h2>
             <div className="space-y-6">
               <div className="space-y-2">
                 <span className="text-xs uppercase tracking-wider text-[#1C1B18]/50">Deposited</span>
@@ -359,17 +330,11 @@ export default function VaultsPage() {
               </div>
               {isConnected ? (
                 <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={() => setShowDepositModal(true)}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0A2E20] py-3 text-sm font-semibold text-[#F5F3EC] transition-all hover:opacity-90"
-                  >
+                  <button onClick={() => setShowDepositModal(true)} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0A2E20] py-3 text-sm font-semibold text-[#F5F3EC] transition-all hover:opacity-90">
                     <CircleDollarSign size={16} />
                     Deposit
                   </button>
-                  <button
-                    onClick={() => setShowWithdrawModal(true)}
-                    className="flex flex-1 items-center justify-center rounded-lg border-2 border-[#1C1B18] py-3 text-sm font-semibold text-[#1C1B18] transition-all hover:bg-[#F5F3EC]"
-                  >
+                  <button onClick={() => setShowWithdrawModal(true)} className="flex flex-1 items-center justify-center rounded-lg border-2 border-[#1C1B18] py-3 text-sm font-semibold text-[#1C1B18] transition-all hover:bg-[#F5F3EC]">
                     Withdraw
                   </button>
                 </div>
@@ -377,9 +342,7 @@ export default function VaultsPage() {
                 <div className="space-y-4 pt-2">
                   <div className="flex items-start gap-2 rounded-lg bg-[#F5F3EC] p-3">
                     <Info size={14} className="mt-0.5 shrink-0 text-[#1C1B18]/40" />
-                    <p className="text-xs leading-relaxed text-[#1C1B18]/50">
-                      Connect your wallet to view your position and deposit into this vault.
-                    </p>
+                    <p className="text-xs leading-relaxed text-[#1C1B18]/50">Connect your wallet to view your position and deposit into this vault.</p>
                   </div>
                   <SolanaConnectButton />
                 </div>
@@ -392,16 +355,11 @@ export default function VaultsPage() {
       {activeTab === "advanced" && (
         <div className="rounded-xl border border-[#1C1B18]/10 bg-white">
           <div className="border-b border-[#1C1B18]/10 px-6 py-4">
-            <h2 className="text-sm font-medium uppercase tracking-wider text-[#1C1B18]/50">
-              Vault Parameters
-            </h2>
+            <h2 className="text-sm font-medium uppercase tracking-wider text-[#1C1B18]/50">Vault Parameters</h2>
           </div>
           <div className="divide-y divide-[#1C1B18]/5">
             {data.parameters.map((row) => (
-              <div
-                key={row.label}
-                className="flex items-center justify-between px-6 py-4"
-              >
+              <div key={row.label} className="flex items-center justify-between px-6 py-4">
                 <span className="text-sm text-[#1C1B18]/60">{row.label}</span>
                 <span className="text-sm font-medium text-[#1C1B18]">{row.value}</span>
               </div>
@@ -413,22 +371,13 @@ export default function VaultsPage() {
       {activeTab === "activity" && (
         <div className="rounded-xl border border-[#1C1B18]/10 bg-white">
           <div className="border-b border-[#1C1B18]/10 px-6 py-4">
-            <h2 className="text-sm font-medium uppercase tracking-wider text-[#1C1B18]/50">
-              Recent Vault Activity
-            </h2>
+            <h2 className="text-sm font-medium uppercase tracking-wider text-[#1C1B18]/50">Recent Vault Activity</h2>
           </div>
           <div className="divide-y divide-[#1C1B18]/5">
             {data.recentActivity.map((row, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between px-6 py-4"
-              >
+              <div key={i} className="flex items-center justify-between px-6 py-4">
                 <div className="flex items-center gap-4">
-                  <span
-                    className={`inline-flex w-28 items-center text-xs font-medium tracking-wide ${
-                      row.amount > 0 ? "text-[#0A2E20]" : "text-[#1C1B18]/60"
-                    }`}
-                  >
+                  <span className={`inline-flex w-28 items-center text-xs font-medium tracking-wide ${row.amount > 0 ? "text-[#0A2E20]" : "text-[#1C1B18]/60"}`}>
                     {row.action}
                   </span>
                   <span className="text-sm font-medium text-[#1C1B18]">
@@ -445,26 +394,11 @@ export default function VaultsPage() {
         </div>
       )}
 
-      {/* User Transaction History */}
-      {isConnected && data.userTransactions.length > 0 && (
-        <TransactionHistory transactions={data.userTransactions} />
-      )}
+      {isConnected && data.userTransactions.length > 0 && <TransactionHistory transactions={data.userTransactions} />}
 
-      <DepositModal
-        isOpen={showDepositModal}
-        onClose={() => setShowDepositModal(false)}
-        vaultName={data.vault.name}
-        currentAPY={data.stats.currentAPY}
-        minDeposit={1000}
-      />
+      <DepositModal isOpen={showDepositModal} onClose={() => setShowDepositModal(false)} vaultName={data.vault.name} currentAPY={data.stats.currentAPY} minDeposit={1000} />
 
-      <WithdrawModal
-        isOpen={showWithdrawModal}
-        onClose={() => setShowWithdrawModal(false)}
-        vaultName={data.vault.name}
-        deposited={data.userPosition.deposited || 0}
-        earnedYield={data.userPosition.earnedYield || 0}
-      />
+      <WithdrawModal isOpen={showWithdrawModal} onClose={() => setShowWithdrawModal(false)} vaultName={data.vault.name} deposited={data.userPosition.deposited || 0} earnedYield={data.userPosition.earnedYield || 0} />
     </div>
   );
 }

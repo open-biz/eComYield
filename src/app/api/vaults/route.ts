@@ -2,12 +2,19 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   // In production, this would fetch from blockchain or database
+  
+  // Calculate epoch end time (14 days from now, for demo purposes)
+  const now = new Date();
+  const epochEndTime = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 14 days from now
+  const epochStartTime = new Date(epochEndTime.getTime() - 14 * 24 * 60 * 60 * 1000); // 14 days ago
+  
   const data = {
     vault: {
       name: "AMZN-USDC Receivables Vault",
       status: "Live",
       epoch: 47,
-      epochTimeRemaining: "6d 14h",
+      epochEndTime: epochEndTime.toISOString(),
+      epochStartTime: epochStartTime.toISOString(),
     },
     stats: {
       totalValueLocked: 12840000,
