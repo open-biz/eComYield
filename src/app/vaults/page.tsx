@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react";
 import {
-  CircleDollarSign,
   Info,
   ExternalLink,
+  ArrowDown,
+  ArrowUp,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { VaultsBreadcrumb } from "@/components/breadcrumb";
 import { SolanaConnectButton } from "@/components/solana-connect-button";
-import { DepositModal } from "@/components/deposit-modal";
-import { WithdrawModal } from "@/components/withdraw-modal";
 import { TransactionHistory } from "@/components/transaction-history";
 
 interface Transaction {
@@ -52,10 +53,23 @@ export default function VaultsPage() {
   const { connected: isConnected, publicKey: address } = useSolanaWallet();
   const [data, setData] = useState<VaultData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showDepositModal, setShowDepositModal] = useState(false);
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "advanced" | "activity">("overview");
   const [timeRemaining, setTimeRemaining] = useState<string>("");
+  
+  // Deposit form state
+  const [depositAmount, setDepositAmount] = useState("");
+  const [isDepositing, setIsDepositing] = useState(false);
+  const [depositSuccess, setDepositSuccess] = useState(false);
+  const [depositError, setDepositError] = useState<string | null>(null);
+  
+  // Withdraw form state
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [withdrawSuccess, setWithdrawSuccess] = useState(false);
+  const [withdrawError, setWithdrawError] = useState<string | null>(null);
+  
+  // Action tab state
+  const [actionTab, setActionTab] = useState<"deposit" | "withdraw">("deposit");
 
   // Countdown timer
   useEffect(() => {
@@ -112,6 +126,91 @@ export default function VaultsPage() {
       .catch(() => setLoading(false));
   }, [isConnected, address]);
 
+  // Calculate yields
+  const parsedDepositAmount = parseFloat(depositAmount) || 0;
+  const isValidDeposit = parsedDepositAmount >= 1000;
+  
+  const yields = useMemo(() => {
+    if (!data || !isValidDeposit || parsedDepositAmount <= 0) {
+      return { daily: 0, monthly: 0, annual: 0 };
+    }
+    const apy = data.stats.currentAPY / 100;
+    const daily = parsedDepositAmount * apy / 365;
+    const monthly = parsedDepositAmount * apy / 12;
+    const annual = parsedDepositAmount * apy;
+    return { daily, monthly, annual };
+  }, [parsedDepositAmount, data, isValidDeposit]);
+
+  // Handle deposit
+  const handleDeposit = async () => {
+    if (!isValidDeposit || !isConnected) return;
+
+    setIsDepositing(true);
+    setDepositError(null);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setDepositSuccess(true);
+      // Update user position
+      if (data) {
+        setData({
+          ...data,
+          userPosition: {
+            ...data.userPosition,
+            deposited: (data.userPosition.deposited || 0) + parsedDepositAmount,
+          },
+        });
+      }
+    } catch {
+      setDepositError("Deposit failed. Please try again.");
+    } finally {
+      setIsDepositing(false);
+    }
+  };
+
+  // Handle withdraw
+  const handleWithdraw = async () => {
+    const parsedWithdraw = parseFloat(withdrawAmount) || 0;
+    const maxWithdraw = data?.userPosition.deposited || 0;
+    
+    if (parsedWithdraw <= 0 || parsedWithdraw > maxWithdraw || !isConnected) return;
+
+    setIsWithdrawing(true);
+    setWithdrawError(null);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setWithdrawSuccess(true);
+      // Update user position
+      if (data) {
+        setData({
+          ...data,
+          userPosition: {
+            ...data.userPosition,
+            deposited: maxWithdraw - parsedWithdraw,
+          },
+        });
+      }
+    } catch {
+      setWithdrawError("Withdraw failed. Please try again.");
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
+
+  // Reset forms
+  const resetDepositForm = () => {
+    setDepositAmount("");
+    setDepositSuccess(false);
+    setDepositError(null);
+  };
+
+  const resetWithdrawForm = () => {
+    setWithdrawAmount("");
+    setWithdrawSuccess(false);
+    setWithdrawError(null);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -130,8 +229,13 @@ export default function VaultsPage() {
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
 
+  const formatUSD = (val: number) => 
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
+
   const formatUSDC = (amount: number) =>
     new Intl.NumberFormat("en-US", { style: "decimal", maximumFractionDigits: 2 }).format(amount / 1e6) + "M USDC";
+
+  const userDeposited = data.userPosition.deposited || 0;
 
   return (
     <div className="space-y-6">
@@ -222,180 +326,395 @@ export default function VaultsPage() {
           </div>
         </div>
 
-        {/* Deposit Button */}
-        <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-6 border-t border-[#1C1B18]/10">
-          <div className="space-y-1">
-            <p className="text-sm text-[#1C1B18]/60">
-              Institutional-grade yield from tokenized Amazon seller receivables. Senior tranche with first-loss protection.
-            </p>
-            <p className="text-xs text-[#1C1B18]/40">
-              Epoch {data.vault.epoch} · {timeRemaining || "Loading..."} remaining
-            </p>
-          </div>
-          <button onClick={() => setShowDepositModal(true)} className="flex h-12 items-center gap-2 rounded-lg bg-[#0A2E20] px-6 text-sm font-semibold tracking-wide text-[#F5F3EC] transition-all hover:opacity-90 hover:shadow-lg">
-            <CircleDollarSign size={18} />
-            Deposit USDC
-          </button>
+        {/* Epoch Info */}
+        <div className="mt-6 pt-6 border-t border-[#1C1B18]/10">
+          <p className="text-sm text-[#1C1B18]/60">
+            Institutional-grade yield from tokenized Amazon seller receivables. Senior tranche with first-loss protection.
+          </p>
+          <p className="text-xs text-[#1C1B18]/40 mt-1">
+            Epoch {data.vault.epoch} · {timeRemaining || "Loading..."} remaining
+          </p>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-[#1C1B18]/10">
-        <div className="flex gap-8">
-          {(["overview", "advanced", "activity"] as const).map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`relative py-4 text-sm font-medium capitalize transition-colors ${activeTab === tab ? "text-[#1C1B18]" : "text-[#1C1B18]/50 hover:text-[#1C1B18]"}`}>
-              {tab}
-              {activeTab === tab && <div className="absolute bottom-0 left-0 h-0.5 w-full bg-[#0A2E20]" />}
+      {/* Main Content - 2 Column Layout like Morpho */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Market Info & Tabs */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Tabs */}
+          <div className="border-b border-[#1C1B18]/10 bg-white rounded-t-xl">
+            <div className="flex gap-8 px-6">
+              {(["overview", "advanced", "activity"] as const).map((tab) => (
+                <button key={tab} onClick={() => setActiveTab(tab)} className={`relative py-4 text-sm font-medium capitalize transition-colors ${activeTab === tab ? "text-[#1C1B18]" : "text-[#1C1B18]/50 hover:text-[#1C1B18]"}`}>
+                  {tab}
+                  {activeTab === tab && <div className="absolute bottom-0 left-0 h-0.5 w-full bg-[#0A2E20]" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tab Content */}
+          <div className="bg-white rounded-b-xl rounded-tr-xl border border-[#1C1B18]/10">
+            {activeTab === "overview" && (
+              <div className="divide-y divide-[#1C1B18]/5">
+                <div className="flex items-center justify-between px-6 py-4">
+                  <span className="text-sm font-medium text-[#1C1B18]">Collateral</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#0A2E20] to-[#0A2E20]/80">
+                        <span className="text-xs font-bold text-white">RWA</span>
+                      </div>
+                      <span className="text-sm font-medium text-[#1C1B18]">RWA</span>
+                    </div>
+                    <button className="flex h-6 w-6 items-center justify-center text-[#1C1B18]/40 hover:text-[#1C1B18] transition-colors">
+                      <ExternalLink size={14} />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between px-6 py-4">
+                  <span className="text-sm font-medium text-[#1C1B18]">Loan</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2774CA]">
+                        <span className="text-xs font-bold text-white">USDC</span>
+                      </div>
+                      <span className="text-sm font-medium text-[#1C1B18]">USDC</span>
+                    </div>
+                    <button className="flex h-6 w-6 items-center justify-center text-[#1C1B18]/40 hover:text-[#1C1B18] transition-colors">
+                      <ExternalLink size={14} />
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between px-6 py-4">
+                  <span className="text-sm font-medium text-[#1C1B18]">Max LTV</span>
+                  <span className="text-sm font-semibold text-[#0A2E20]">75%</span>
+                </div>
+                <div className="flex items-center justify-between px-6 py-4">
+                  <span className="text-sm font-medium text-[#1C1B18]">Utilization</span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-24 overflow-hidden rounded-full bg-[#1C1B18]/10">
+                      <div className="h-full rounded-full bg-[#0A2E20]" style={{ width: `${data.stats.poolUtilization}%` }} />
+                    </div>
+                    <span className="text-sm font-medium text-[#1C1B18]">{data.stats.poolUtilization}%</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between px-6 py-4">
+                  <span className="text-sm font-medium text-[#1C1B18]">Active Advances</span>
+                  <span className="text-sm font-semibold text-[#1C1B18]">{data.stats.activeAdvances}</span>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "advanced" && (
+              <div className="divide-y divide-[#1C1B18]/5">
+                {data.parameters.map((row) => (
+                  <div key={row.label} className="flex items-center justify-between px-6 py-4">
+                    <span className="text-sm text-[#1C1B18]/60">{row.label}</span>
+                    <span className="text-sm font-medium text-[#1C1B18]">{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {activeTab === "activity" && (
+              <div className="divide-y divide-[#1C1B18]/5">
+                {data.recentActivity.map((row, i) => (
+                  <div key={i} className="flex items-center justify-between px-6 py-4">
+                    <div className="flex items-center gap-4">
+                      <span className={`inline-flex w-28 items-center text-xs font-medium tracking-wide ${row.amount > 0 ? "text-[#0A2E20]" : "text-[#1C1B18]/60"}`}>
+                        {row.action}
+                      </span>
+                      <span className="text-sm font-medium text-[#1C1B18]">
+                        {row.amount > 0 ? "+" : ""}{formatCurrency(row.amount)}
+                      </span>
+                    </div>
+                    <div className="hidden items-center gap-6 sm:flex">
+                      <span className="text-xs font-mono text-[#1C1B18]/40">{row.wallet}</span>
+                      <span className="text-xs text-[#1C1B18]/40">{row.time}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* User Transactions */}
+          {isConnected && data.userTransactions.length > 0 && (
+            <TransactionHistory transactions={data.userTransactions} />
+          )}
+        </div>
+
+        {/* Right Column - Action Panel (Deposit/Withdraw) */}
+        <div className="rounded-xl border border-[#1C1B18]/10 bg-white p-6 shadow-sm">
+          {/* Action Tabs */}
+          <div className="flex gap-1 p-1 bg-[#F5F3EC] rounded-lg mb-6">
+            <button
+              onClick={() => { setActionTab("deposit"); resetDepositForm(); resetWithdrawForm(); }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-md transition-all ${
+                actionTab === "deposit" 
+                  ? "bg-white text-[#0A2E20] shadow-sm" 
+                  : "text-[#1C1B18]/50 hover:text-[#1C1B18]"
+              }`}
+            >
+              <ArrowDown size={16} />
+              Deposit
             </button>
-          ))}
-        </div>
-      </div>
+            <button
+              onClick={() => { setActionTab("withdraw"); resetDepositForm(); resetWithdrawForm(); }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold rounded-md transition-all ${
+                actionTab === "withdraw" 
+                  ? "bg-white text-[#0A2E20] shadow-sm" 
+                  : "text-[#1C1B18]/50 hover:text-[#1C1B18]"
+              }`}
+            >
+              <ArrowUp size={16} />
+              Withdraw
+            </button>
+          </div>
 
-      {/* Tab Content */}
-      {activeTab === "overview" && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 rounded-xl border border-[#1C1B18]/10 bg-white">
-            <div className="border-b border-[#1C1B18]/10 px-6 py-4">
-              <h2 className="text-sm font-medium uppercase tracking-wider text-[#1C1B18]/50">Market Attributes</h2>
+          {/* User Position Summary */}
+          <div className="space-y-4 mb-6 pb-6 border-b border-[#1C1B18]/10">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[#1C1B18]/50">Your Deposited</span>
+              <span className="text-lg font-bold text-[#1C1B18]">{formatUSD(userDeposited)}</span>
             </div>
-            <div className="divide-y divide-[#1C1B18]/5">
-              <div className="flex items-center justify-between px-6 py-4">
-                <span className="text-sm font-medium text-[#1C1B18]">Collateral</span>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#0A2E20] to-[#0A2E20]/80">
-                      <span className="text-xs font-bold text-white">RWA</span>
-                    </div>
-                    <span className="text-sm font-medium text-[#1C1B18]">RWA</span>
-                  </div>
-                  <button className="flex h-6 w-6 items-center justify-center text-[#1C1B18]/40 hover:text-[#1C1B18] transition-colors">
-                    <ExternalLink size={14} />
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center justify-between px-6 py-4">
-                <span className="text-sm font-medium text-[#1C1B18]">Loan</span>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#2774CA]">
-                      <span className="text-xs font-bold text-white">USDC</span>
-                    </div>
-                    <span className="text-sm font-medium text-[#1C1B18]">USDC</span>
-                  </div>
-                  <button className="flex h-6 w-6 items-center justify-center text-[#1C1B18]/40 hover:text-[#1C1B18] transition-colors">
-                    <ExternalLink size={14} />
-                  </button>
-                </div>
-              </div>
-              <div className="flex items-center justify-between px-6 py-4">
-                <span className="text-sm font-medium text-[#1C1B18]">Max LTV</span>
-                <span className="text-sm font-semibold text-[#0A2E20]">75%</span>
-              </div>
-              <div className="flex items-center justify-between px-6 py-4">
-                <span className="text-sm font-medium text-[#1C1B18]">Utilization</span>
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-24 overflow-hidden rounded-full bg-[#1C1B18]/10">
-                    <div className="h-full rounded-full bg-[#0A2E20]" style={{ width: `${data.stats.poolUtilization}%` }} />
-                  </div>
-                  <span className="text-sm font-medium text-[#1C1B18]">{data.stats.poolUtilization}%</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between px-6 py-4">
-                <span className="text-sm font-medium text-[#1C1B18]">Active Advances</span>
-                <span className="text-sm font-semibold text-[#1C1B18]">{data.stats.activeAdvances}</span>
-              </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[#1C1B18]/50">Earned Yield</span>
+              <span className="text-lg font-bold text-[#0A2E20]">{formatUSD(data.userPosition.earnedYield || 0)}</span>
             </div>
           </div>
 
-          {/* Your Position */}
-          <div className="rounded-xl border border-[#1C1B18]/10 bg-white p-6">
-            <h2 className="mb-6 text-sm font-medium uppercase tracking-wider text-[#1C1B18]/50">Your Position</h2>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <span className="text-xs uppercase tracking-wider text-[#1C1B18]/50">Deposited</span>
-                <p className="text-3xl font-bold tracking-tight text-[#1C1B18]">
-                  {data.userPosition.deposited ? formatCurrency(data.userPosition.deposited) : "—"}
-                  <span className="ml-1 text-lg font-medium text-[#1C1B18]/50">USDC</span>
-                </p>
-              </div>
-              <div className="space-y-2">
-                <span className="text-xs uppercase tracking-wider text-[#1C1B18]/50">Earned Yield</span>
-                <p className="text-2xl font-bold text-[#0A2E20]">
-                  {data.userPosition.earnedYield ? formatCurrency(data.userPosition.earnedYield) : "—"}
-                  <span className="ml-1 text-sm font-medium text-[#0A2E20]/70">USDC</span>
-                </p>
-              </div>
-              {isConnected ? (
-                <div className="flex gap-3 pt-2">
-                  <button onClick={() => setShowDepositModal(true)} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0A2E20] py-3 text-sm font-semibold text-[#F5F3EC] transition-all hover:opacity-90">
-                    <CircleDollarSign size={16} />
-                    Deposit
-                  </button>
-                  <button onClick={() => setShowWithdrawModal(true)} className="flex flex-1 items-center justify-center rounded-lg border-2 border-[#1C1B18] py-3 text-sm font-semibold text-[#1C1B18] transition-all hover:bg-[#F5F3EC]">
-                    Withdraw
-                  </button>
+          {/* Deposit Form */}
+          {actionTab === "deposit" && (
+            <div className="space-y-4">
+              {/* Amount Input */}
+              <div className="rounded-lg border border-[#1C1B18]/10 bg-[#F5F3EC]/50 p-4 hover:bg-[#F5F3EC] transition-colors cursor-text">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-[#1C1B18]/50">Deposit USDC</span>
+                  <div className="flex items-center gap-1">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2774CA]">
+                      <span className="text-[8px] font-bold text-white">USDC</span>
+                    </div>
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-4 pt-2">
+                <input
+                  type="number"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                  placeholder="0.00"
+                  inputMode="decimal"
+                  className="w-full bg-transparent text-2xl font-bold text-[#1C1B18] outline-none caret-[#0A2E20] placeholder:text-[#1C1B18]/20"
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-[#1C1B18]/40">≈ {formatUSD(parsedDepositAmount)}</span>
+                  <span className="text-xs text-[#1C1B18]/40">Min: 1,000 USDC</span>
+                </div>
+              </div>
+
+              {/* Quick Amount Buttons */}
+              <div className="flex gap-2">
+                {[1000, 5000, 10000, 50000].map((val) => (
+                  <button
+                    key={val}
+                    onClick={() => setDepositAmount(val.toString())}
+                    className="flex-1 rounded border border-[#1C1B18]/10 py-1.5 text-xs font-medium text-[#1C1B18]/60 hover:bg-[#F5F3EC] hover:text-[#1C1B18] transition-colors"
+                  >
+                    ${val.toLocaleString()}
+                  </button>
+                ))}
+              </div>
+
+              {/* Yield Calculator */}
+              <div className="space-y-2 rounded-lg border border-[#1C1B18]/10 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[#1C1B18]/50">APY</span>
+                  <span className="text-sm font-bold text-[#0A2E20]">{data.stats.currentAPY}%</span>
+                </div>
+                <div className="space-y-1.5 border-t border-[#1C1B18]/5 pt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-[#1C1B18]/50">Projected daily</span>
+                    <span className={`text-sm font-medium ${parsedDepositAmount > 0 ? "text-[#0A2E20]" : "text-[#1C1B18]/30"}`}>
+                      {formatUSD(yields.daily)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-[#1C1B18]/50">Projected monthly</span>
+                    <span className={`text-sm font-medium ${parsedDepositAmount > 0 ? "text-[#0A2E20]" : "text-[#1C1B18]/30"}`}>
+                      {formatUSD(yields.monthly)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-[#1C1B18]/50">Projected yearly</span>
+                    <span className={`text-sm font-medium ${parsedDepositAmount > 0 ? "text-[#0A2E20]" : "text-[#1C1B18]/30"}`}>
+                      {formatUSD(yields.annual)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Error */}
+              {depositError && (
+                <div className="flex items-center gap-2 rounded-sm bg-red-50 p-3">
+                  <AlertCircle size={16} className="text-red-500" />
+                  <span className="text-sm text-red-600">{depositError}</span>
+                </div>
+              )}
+
+              {/* Deposit Button */}
+              {!isConnected ? (
+                <div className="space-y-3">
                   <div className="flex items-start gap-2 rounded-lg bg-[#F5F3EC] p-3">
                     <Info size={14} className="mt-0.5 shrink-0 text-[#1C1B18]/40" />
-                    <p className="text-xs leading-relaxed text-[#1C1B18]/50">Connect your wallet to view your position and deposit into this vault.</p>
+                    <p className="text-xs leading-relaxed text-[#1C1B18]/50">Connect your wallet to deposit.</p>
                   </div>
                   <SolanaConnectButton />
                 </div>
+              ) : depositSuccess ? (
+                <div className="text-center py-4">
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#0A2E20]/10">
+                    <ArrowDown size={24} className="text-[#0A2E20]" />
+                  </div>
+                  <h3 className="text-lg font-bold text-[#1C1B18]">Deposit Successful!</h3>
+                  <p className="text-sm text-[#1C1B18]/60 mt-1">{formatUSD(parsedDepositAmount)} deposited</p>
+                  <button
+                    onClick={resetDepositForm}
+                    className="mt-4 w-full rounded-lg bg-[#0A2E20] py-3 text-sm font-medium text-[#F5F3EC] hover:opacity-90"
+                  >
+                    Deposit More
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleDeposit}
+                  disabled={!isValidDeposit || isDepositing}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#0A2E20] py-4 text-sm font-semibold text-[#F5F3EC] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isDepositing ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Depositing...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowDown size={16} />
+                      Deposit {parsedDepositAmount > 0 ? formatUSD(parsedDepositAmount) : ""}
+                    </>
+                  )}
+                </button>
               )}
+
+              {/* Info */}
+              <div className="flex items-start gap-2 rounded-sm bg-[#EBE8DE] p-3">
+                <AlertCircle size={14} className="mt-0.5 shrink-0 text-[#1C1B18]/40" />
+                <p className="text-xs leading-relaxed text-[#1C1B18]/50">
+                  Yield starts from next epoch. Early withdrawal may incur fees.
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      {activeTab === "advanced" && (
-        <div className="rounded-xl border border-[#1C1B18]/10 bg-white">
-          <div className="border-b border-[#1C1B18]/10 px-6 py-4">
-            <h2 className="text-sm font-medium uppercase tracking-wider text-[#1C1B18]/50">Vault Parameters</h2>
-          </div>
-          <div className="divide-y divide-[#1C1B18]/5">
-            {data.parameters.map((row) => (
-              <div key={row.label} className="flex items-center justify-between px-6 py-4">
-                <span className="text-sm text-[#1C1B18]/60">{row.label}</span>
-                <span className="text-sm font-medium text-[#1C1B18]">{row.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {activeTab === "activity" && (
-        <div className="rounded-xl border border-[#1C1B18]/10 bg-white">
-          <div className="border-b border-[#1C1B18]/10 px-6 py-4">
-            <h2 className="text-sm font-medium uppercase tracking-wider text-[#1C1B18]/50">Recent Vault Activity</h2>
-          </div>
-          <div className="divide-y divide-[#1C1B18]/5">
-            {data.recentActivity.map((row, i) => (
-              <div key={i} className="flex items-center justify-between px-6 py-4">
-                <div className="flex items-center gap-4">
-                  <span className={`inline-flex w-28 items-center text-xs font-medium tracking-wide ${row.amount > 0 ? "text-[#0A2E20]" : "text-[#1C1B18]/60"}`}>
-                    {row.action}
-                  </span>
-                  <span className="text-sm font-medium text-[#1C1B18]">
-                    {row.amount > 0 ? "+" : ""}{formatCurrency(row.amount)}
-                  </span>
+          {/* Withdraw Form */}
+          {actionTab === "withdraw" && (
+            <div className="space-y-4">
+              {/* Amount Input */}
+              <div className="rounded-lg border border-[#1C1B18]/10 bg-[#F5F3EC]/50 p-4 hover:bg-[#F5F3EC] transition-colors cursor-text">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-[#1C1B18]/50">Withdraw USDC</span>
+                  <div className="flex items-center gap-1">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2774CA]">
+                      <span className="text-[8px] font-bold text-white">USDC</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="hidden items-center gap-6 sm:flex">
-                  <span className="text-xs font-mono text-[#1C1B18]/40">{row.wallet}</span>
-                  <span className="text-xs text-[#1C1B18]/40">{row.time}</span>
+                <input
+                  type="number"
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  placeholder="0.00"
+                  inputMode="decimal"
+                  className="w-full bg-transparent text-2xl font-bold text-[#1C1B18] outline-none caret-[#0A2E20] placeholder:text-[#1C1B18]/20"
+                />
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-[#1C1B18]/40">≈ {formatUSD(parseFloat(withdrawAmount) || 0)}</span>
+                  <button 
+                    onClick={() => setWithdrawAmount(userDeposited.toString())}
+                    className="text-xs font-medium text-[#0A2E20] hover:underline"
+                  >
+                    Max: {formatUSD(userDeposited)}
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+
+              {/* Available Balance */}
+              <div className="rounded-lg border border-[#1C1B18]/10 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[#1C1B18]/50">Available to withdraw</span>
+                  <span className="text-sm font-bold text-[#1C1B18]">{formatUSD(userDeposited)}</span>
+                </div>
+              </div>
+
+              {/* Error */}
+              {withdrawError && (
+                <div className="flex items-center gap-2 rounded-sm bg-red-50 p-3">
+                  <AlertCircle size={16} className="text-red-500" />
+                  <span className="text-sm text-red-600">{withdrawError}</span>
+                </div>
+              )}
+
+              {/* Withdraw Button */}
+              {!isConnected ? (
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2 rounded-lg bg-[#F5F3EC] p-3">
+                    <Info size={14} className="mt-0.5 shrink-0 text-[#1C1B18]/40" />
+                    <p className="text-xs leading-relaxed text-[#1C1B18]/50">Connect your wallet to withdraw.</p>
+                  </div>
+                  <SolanaConnectButton />
+                </div>
+              ) : withdrawSuccess ? (
+                <div className="text-center py-4">
+                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#0A2E20]/10">
+                    <ArrowUp size={24} className="text-[#0A2E20]" />
+                  </div>
+                  <h3 className="text-lg font-bold text-[#1C1B18]">Withdraw Successful!</h3>
+                  <p className="text-sm text-[#1C1B18]/60 mt-1">{formatUSD(parseFloat(withdrawAmount) || 0)} withdrawn</p>
+                  <button
+                    onClick={resetWithdrawForm}
+                    className="mt-4 w-full rounded-lg bg-[#0A2E20] py-3 text-sm font-medium text-[#F5F3EC] hover:opacity-90"
+                  >
+                    Withdraw More
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleWithdraw}
+                  disabled={!isConnected || !withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > userDeposited || isWithdrawing}
+                  className="w-full flex items-center justify-center gap-2 rounded-lg border-2 border-[#1C1B18] py-4 text-sm font-semibold text-[#1C1B18] hover:bg-[#F5F3EC] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isWithdrawing ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Withdrawing...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowUp size={16} />
+                      Withdraw {withdrawAmount ? formatUSD(parseFloat(withdrawAmount)) : ""}
+                    </>
+                  )}
+                </button>
+              )}
+
+              {/* Info */}
+              <div className="flex items-start gap-2 rounded-sm bg-[#EBE8DE] p-3">
+                <AlertCircle size={14} className="mt-0.5 shrink-0 text-[#1C1B18]/40" />
+                <p className="text-xs leading-relaxed text-[#1C1B18]/50">
+                  Withdrawals are processed at epoch end. Your yield is preserved.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
-      )}
-
-      {isConnected && data.userTransactions.length > 0 && <TransactionHistory transactions={data.userTransactions} />}
-
-      <DepositModal isOpen={showDepositModal} onClose={() => setShowDepositModal(false)} vaultName={data.vault.name} currentAPY={data.stats.currentAPY} minDeposit={1000} />
-
-      <WithdrawModal isOpen={showWithdrawModal} onClose={() => setShowWithdrawModal(false)} vaultName={data.vault.name} deposited={data.userPosition.deposited || 0} earnedYield={data.userPosition.earnedYield || 0} />
+      </div>
     </div>
   );
 }
