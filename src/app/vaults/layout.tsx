@@ -26,7 +26,7 @@ export default function VaultsLayout({
         <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between px-6 lg:px-10">
           {/* Left: Brand */}
           <div className="flex items-center gap-3">
-            <Link href="/" className="hover:opacity-80 transition-opacity">
+            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <Image 
                 src="/eComYield-logo.jpeg" 
                 alt="eComYield" 
@@ -34,6 +34,7 @@ export default function VaultsLayout({
                 height={36} 
                 className="object-contain"
               />
+              <span className="text-sm font-medium text-[#1C1B18]/60 hidden sm:inline">Home</span>
             </Link>
             <div className="h-5 w-px bg-[#1C1B18]/20" />
             <Link href="/vaults" className="whitespace-nowrap text-lg font-bold tracking-tight text-[#1C1B18]">
