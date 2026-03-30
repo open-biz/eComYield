@@ -511,12 +511,12 @@ export default function VaultsPage() {
                 </div>
               </div>
 
-              {/* Quick Amount Buttons */}
+              {/* Quick Amount Buttons - Additive */}
               <div className="flex gap-2">
                 {[1000, 5000, 10000, 50000].map((val) => (
                   <button
                     key={val}
-                    onClick={() => setDepositAmount(val.toString())}
+                    onClick={() => setDepositAmount((prev) => ((parseFloat(prev) || 0) + val).toString())}
                     className="flex-1 rounded border border-[#1C1B18]/10 py-1.5 text-xs font-medium text-[#1C1B18]/60 hover:bg-[#F5F3EC] hover:text-[#1C1B18] transition-colors"
                   >
                     ${val.toLocaleString()}
