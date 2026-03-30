@@ -6,10 +6,8 @@ import { Wallet, LogOut } from "lucide-react";
 
 export function ConnectWallet({ 
   variant = "primary",
-  onConnected,
 }: { 
   variant?: "primary" | "secondary";
-  onConnected?: () => void;
 }) {
   const { isConnected, address } = useAccount();
   const { disconnect } = useDisconnect();
@@ -37,7 +35,7 @@ export function ConnectWallet({
 
   return (
     <ConnectButton.Custom>
-      {({ account, chain, openAccountModal, openChainModal, openConnectModal, mounted }) => {
+      {({ account, chain, openAccountModal, openConnectModal, mounted }) => {
         const ready = mounted;
         const connected = ready && account && chain;
 

@@ -16,14 +16,10 @@ export default function Home() {
   const handleConnectStore = () => router.push("/seller");
   const handleConnectWallet = () => router.push("/vaults");
 
-  const scrollToYield = () => {
-    document.getElementById("yield-pitch")?.scrollIntoView({ behavior: "smooth" });
-  };
-
   return (
     <main className="bg-[#F5F3EC]">
       <Navbar onConnectStore={handleConnectStore} onConnectWallet={handleConnectWallet} />
-      <HeroSection onConnectStore={handleConnectStore} onEarnYield={scrollToYield} />
+      <HeroSection onConnectStore={handleConnectStore} />
       <ProblemSolution />
       <TrustBanner />
       <Mechanism />

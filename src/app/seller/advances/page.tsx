@@ -37,7 +37,6 @@ export default function SellerAdvances() {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [advances, setAdvances] = useState<Advance[]>([]);
   const [totals, setTotals] = useState({ totalAdvanced: 0, totalFees: 0, totalNet: 0 });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchAdvances = async () => {
@@ -53,8 +52,6 @@ export default function SellerAdvances() {
         setTotals(data.totals);
       } catch (err) {
         console.error("Failed to fetch advances:", err);
-      } finally {
-        setLoading(false);
       }
     };
     fetchAdvances();

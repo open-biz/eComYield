@@ -11,7 +11,7 @@ export default function Preloader({ children }: { children: React.ReactNode }) {
     const hasSeenPreloader = sessionStorage.getItem("preloaderShown");
     
     if (hasSeenPreloader) {
-      setIsLoading(false);
+      setTimeout(() => setIsLoading(false), 0);
       return;
     }
 

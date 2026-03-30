@@ -7,12 +7,11 @@ import { ConnectWallet } from "@/components/connect-button";
 
 interface HeroSectionProps {
   onConnectStore?: () => void;
-  onEarnYield?: () => void;
 }
 
 const headlineWords = ["Money 9–23 Days.", "Cash Flow Gap.", "Sales Cycle.", "Working Capital."];
 
-export default function HeroSection({ onConnectStore, onEarnYield }: HeroSectionProps) {
+export default function HeroSection({ onConnectStore }: HeroSectionProps) {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isTyping, setIsTyping] = useState(true);
@@ -37,8 +36,10 @@ export default function HeroSection({ onConnectStore, onEarnYield }: HeroSection
         }, 40);
         return () => clearTimeout(timeout);
       } else {
-        setCurrentWordIndex((prev) => (prev + 1) % headlineWords.length);
-        setIsTyping(true);
+        setTimeout(() => {
+          setCurrentWordIndex((prev) => (prev + 1) % headlineWords.length);
+          setIsTyping(true);
+        }, 0);
       }
     }
   }, [displayText, isTyping, currentWordIndex]);
