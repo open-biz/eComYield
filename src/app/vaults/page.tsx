@@ -9,6 +9,7 @@ import {
   ArrowUp,
   Loader2,
   AlertCircle,
+  X,
 } from "lucide-react";
 import { VaultsBreadcrumb } from "@/components/breadcrumb";
 import { SolanaConnectButton } from "@/components/solana-connect-button";
@@ -491,7 +492,15 @@ export default function VaultsPage() {
               <div className="rounded-lg border border-[#1C1B18]/10 bg-[#F5F3EC]/50 p-4 hover:bg-[#F5F3EC] transition-colors cursor-text">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs text-[#1C1B18]/50">Deposit USDC</span>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    {depositAmount && (
+                      <button
+                        onClick={() => setDepositAmount("")}
+                        className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1C1B18]/10 text-[#1C1B18]/40 hover:bg-[#1C1B18]/20 hover:text-[#1C1B18] transition-colors"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
                     <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2774CA]">
                       <span className="text-[8px] font-bold text-white">USDC</span>
                     </div>
@@ -620,7 +629,15 @@ export default function VaultsPage() {
               <div className="rounded-lg border border-[#1C1B18]/10 bg-[#F5F3EC]/50 p-4 hover:bg-[#F5F3EC] transition-colors cursor-text">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs text-[#1C1B18]/50">Withdraw USDC</span>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    {withdrawAmount && (
+                      <button
+                        onClick={() => setWithdrawAmount("")}
+                        className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1C1B18]/10 text-[#1C1B18]/40 hover:bg-[#1C1B18]/20 hover:text-[#1C1B18] transition-colors"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
                     <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2774CA]">
                       <span className="text-[8px] font-bold text-white">USDC</span>
                     </div>
