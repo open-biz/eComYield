@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X, Home } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import Image from "next/image";
 import { SolanaConnectButton } from "@/components/solana-connect-button";
 
 const navLinks = [
@@ -24,15 +25,17 @@ export default function VaultsLayout({
       <nav className="fixed top-0 left-0 z-50 h-20 w-full border-b border-[#1C1B18]/10 bg-[#F5F3EC]">
         <div className="mx-auto flex h-full max-w-[1440px] items-center justify-between px-6 lg:px-10">
           {/* Left: Brand */}
-          <div className="flex items-center gap-4">
-            <Link 
-              href="/" 
-              className="flex items-center gap-2 text-sm font-medium text-[#1C1B18]/60 hover:text-[#1C1B18] transition-colors"
-            >
-              <Home size={18} />
-              <span className="hidden sm:inline">Home</span>
+          <div className="flex items-center gap-3">
+            <Link href="/" className="hover:opacity-80 transition-opacity">
+              <Image 
+                src="/eComYield-logo.jpeg" 
+                alt="eComYield" 
+                width={36} 
+                height={36} 
+                className="object-contain"
+              />
             </Link>
-            <div className="h-4 w-px bg-[#1C1B18]/20" />
+            <div className="h-5 w-px bg-[#1C1B18]/20" />
             <Link href="/vaults" className="whitespace-nowrap text-lg font-bold tracking-tight text-[#1C1B18]">
               eComYield | Institutional
             </Link>
