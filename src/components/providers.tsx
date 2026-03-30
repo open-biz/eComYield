@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import "@solana/wallet-adapter-react-ui/styles.css";
+import "@/styles/wallet-adapter-custom.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import { PhantomWalletAdapter, SolflareWalletAdapter, LedgerWalletAdapter, CoinbaseWalletAdapter } from "@solana/wallet-adapter-wallets";
