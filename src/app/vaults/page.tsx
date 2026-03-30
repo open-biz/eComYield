@@ -25,6 +25,7 @@ interface Transaction {
 interface VaultData {
   vault: { name: string; status: string; epoch: number; epochEndTime: string; epochStartTime: string };
   stats: {
+    totalMarketSize: number;
     totalValueLocked: number;
     tvlChange: number;
     currentAPY: number;
@@ -109,7 +110,7 @@ export default function VaultsPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [isConnected]);
+  }, [isConnected, address]);
 
   if (loading) {
     return (
@@ -128,12 +129,6 @@ export default function VaultsPage() {
 
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
-
-  const formatCompact = (amount: number) => {
-    if (amount >= 1e9) return `$${(amount / 1e9).toFixed(2)}B`;
-    if (amount >= 1e6) return `$${(amount / 1e6).toFixed(2)}M`;
-    return formatCurrency(amount);
-  };
 
   const formatUSDC = (amount: number) =>
     new Intl.NumberFormat("en-US", { style: "decimal", maximumFractionDigits: 2 }).format(amount / 1e6) + "M USDC";
@@ -183,9 +178,10 @@ export default function VaultsPage() {
                 <Info size={14} className="text-[#1C1B18]/30" />
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold tracking-tight text-[#1C1B18]">{formatCompact(data.stats.totalValueLocked * 100)}</span>
+                <span className="text-2xl font-bold tracking-tight text-[#1C1B18]">${(data.stats.totalMarketSize / 1e6).toFixed(2)}</span>
+                <span className="text-sm font-semibold text-[#1C1B18]/60">M</span>
               </div>
-              <span className="text-xs text-[#1C1B18]/40">{formatUSDC(data.stats.totalValueLocked * 100)}</span>
+              <span className="text-xs text-[#1C1B18]/40">{formatUSDC(data.stats.totalMarketSize)}</span>
             </div>
 
             <div className="space-y-2">
@@ -194,7 +190,8 @@ export default function VaultsPage() {
                 <Info size={14} className="text-[#1C1B18]/30" />
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold tracking-tight text-[#1C1B18]">{formatCompact(data.stats.totalValueLocked)}</span>
+                <span className="text-2xl font-bold tracking-tight text-[#1C1B18]">${(data.stats.totalValueLocked / 1e6).toFixed(2)}</span>
+                <span className="text-sm font-semibold text-[#1C1B18]/60">M</span>
               </div>
               <span className="text-xs text-[#1C1B18]/40">{formatUSDC(data.stats.totalValueLocked)}</span>
             </div>

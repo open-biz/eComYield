@@ -17,9 +17,10 @@ export async function GET() {
       epochStartTime: epochStartTime.toISOString(),
     },
     stats: {
-      totalValueLocked: 12840000,
+      totalMarketSize: 50240000,
+      totalValueLocked: 24180000,
       tvlChange: 4.2,
-      currentAPY: 9.74,
+      currentAPY: 24.56,
       apyChange: 0.31,
       poolUtilization: 87.3,
       utilizationChange: 1.8,
