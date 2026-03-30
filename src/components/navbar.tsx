@@ -3,6 +3,7 @@
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface NavbarProps {
   onConnectStore?: () => void;
@@ -15,8 +16,17 @@ export default function Navbar({ onConnectStore, onConnectWallet }: NavbarProps)
   return (
     <nav className="w-full bg-[#0A2E20] z-50">
       <div className="flex items-center justify-between px-8 py-6">
-        <Link href="/" className="text-[#F5F3EC] font-bold text-xl tracking-tight">
-          eComYield
+        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <Image 
+            src="/eComYield-logo.jpeg" 
+            alt="eComYield" 
+            width={40} 
+            height={40} 
+            className="object-contain"
+          />
+          <span className="text-[#F5F3EC] font-bold text-xl tracking-tight">
+            eComYield
+          </span>
         </Link>
 
         {/* Desktop buttons */}
