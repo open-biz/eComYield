@@ -1,26 +1,145 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --cream: #F5F3EC;
+  --charcoal: #1C1B18;
+  --forest: #0A2E20;
+  --sand: #EBE8DE;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--cream);
+  color: var(--charcoal);
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--charcoal);
+  border-radius: 0;
+}
+
+/* Selection */
+::selection {
+  background: var(--forest);
+  color: var(--cream);
+}
+
+/* Scroll Animations - Fade In Up */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scroll Animations - Fade In Left */
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Scroll Animations - Fade In Right */
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Scroll Animations - Scale In */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Animation utility classes - triggered by scroll observer */
+.animate-on-scroll {
+  opacity: 0;
+}
+
+.animate-on-scroll.fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-on-scroll.fade-in-left {
+  animation: fadeInLeft 0.6s ease-out forwards;
+}
+
+.animate-on-scroll.fade-in-right {
+  animation: fadeInRight 0.6s ease-out forwards;
+}
+
+.animate-on-scroll.scale-in {
+  animation: scaleIn 0.5s ease-out forwards;
+}
+
+/* Visible state - maintains animation end state */
+.animate-on-scroll.visible {
+  opacity: 1;
+  transform: translate(0) scale(1);
+}
+
+/* Staggered delays for children */
+.animate-on-scroll > *:nth-child(1) { animation-delay: 0ms; }
+.animate-on-scroll > *:nth-child(2) { animation-delay: 100ms; }
+.animate-on-scroll > *:nth-child(3) { animation-delay: 200ms; }
+.animate-on-scroll > *:nth-child(4) { animation-delay: 300ms; }
+.animate-on-scroll > *:nth-child(5) { animation-delay: 400ms; }
+.animate-on-scroll > *:nth-child(6) { animation-delay: 500ms; }
+
+/* Smooth hover transitions */
+a, button {
+  transition: all 0.2s ease;
+}
+
+/* Link hover underline */
+.link-hover {
+  position: relative;
+}
+
+.link-hover::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.2s ease;
+}
+
+.link-hover:hover::after {
+  width: 100%;
 }

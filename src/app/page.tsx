@@ -1,81 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import HeroSection from "@/components/hero-section";
-import EasySetup from "@/components/easy-setup";
-import YieldShowcase from "@/components/yield-showcase";
-import CompetitiveLandscape from "@/components/competitive-landscape";
-import MarketSection from "@/components/market-section";
-import CTASection from "@/components/cta-section";
-import Footer from "@/components/footer";
-import DemoConnect from "@/components/demo-connect";
-import SellerDashboard from "@/components/seller-dashboard";
-
-const DEMO_ACCOUNTS: Record<string, { name: string; dailySales: number }> = {
-  demo1: { name: "TechGear Pro", dailySales: 12450 },
-  demo2: { name: "Home Essentials Co", dailySales: 8320 },
-  demo3: { name: "FitLife Active", dailySales: 15890 },
-};
+import ProblemSolution from "@/components/problem-solution";
+import TrustBanner from "@/components/trust-banner";
+import Mechanism from "@/components/mechanism";
+import PricingSection from "@/components/pricing-section";
+import YieldPitch from "@/components/yield-pitch";
+import CTAFooter from "@/components/cta-footer";
 
 export default function Home() {
-  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
-  const [isDashboardOpen, setIsDashboardOpen] = useState(false);
-  const [selectedSeller, setSelectedSeller] = useState<{ name: string; dailySales: number } | null>(null);
+  const router = useRouter();
 
-  const handleConnect = (demoId: string) => {
-    const data = DEMO_ACCOUNTS[demoId];
-    if (data) {
-      setSelectedSeller(data);
-      setIsDashboardOpen(true);
-    }
+  const handleConnectStore = () => router.push("/seller");
+  const handleConnectWallet = () => router.push("/vaults");
+
+  const scrollToYield = () => {
+    document.getElementById("yield-pitch")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <main className="min-h-screen bg-slate-950">
-      <Navbar 
-        onConnectStore={() => setIsDemoModalOpen(true)} 
-        onEarnYield={() => {
-          const yieldSection = document.getElementById("yield");
-          yieldSection?.scrollIntoView({ behavior: "smooth" });
-        }}
-      />
-      <HeroSection 
-        onConnectStore={() => setIsDemoModalOpen(true)} 
-        onEarnYield={() => {
-          const yieldSection = document.getElementById("yield");
-          yieldSection?.scrollIntoView({ behavior: "smooth" });
-        }}
-      />
-      <EasySetup />
-      <YieldShowcase />
-      <MarketSection />
-      <CompetitiveLandscape />
-      <CTASection 
-        onConnectStore={() => setIsDemoModalOpen(true)}
-        onEarnYield={() => {
-          const yieldSection = document.getElementById("yield");
-          yieldSection?.scrollIntoView({ behavior: "smooth" });
-        }}
-      />
-      <Footer />
-
-      {/* Demo Connect Modal */}
-      <DemoConnect
-        isOpen={isDemoModalOpen}
-        onClose={() => setIsDemoModalOpen(false)}
-        onConnect={handleConnect}
-      />
-
-      {/* Seller Dashboard */}
-      {selectedSeller && (
-        <SellerDashboard
-          isOpen={isDashboardOpen}
-          onClose={() => setIsDashboardOpen(false)}
-          sellerName={selectedSeller.name}
-          dailySales={selectedSeller.dailySales}
-        />
-      )}
+    <main className="bg-[#F5F3EC]">
+      <Navbar onConnectStore={handleConnectStore} onConnectWallet={handleConnectWallet} />
+      <HeroSection onConnectStore={handleConnectStore} onEarnYield={scrollToYield} />
+      <ProblemSolution />
+      <TrustBanner />
+      <Mechanism />
+      <PricingSection />
+      <div id="yield-pitch">
+        <YieldPitch />
+      </div>
+      <CTAFooter onConnectStore={handleConnectStore} onDepositUSDC={handleConnectWallet} />
     </main>
   );
 }
