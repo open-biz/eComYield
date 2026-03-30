@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   DollarSign,
   TrendingUp,
@@ -11,40 +12,84 @@ import {
   Wallet,
 } from "lucide-react";
 
-const stats = [
-  {
-    label: "Today's Sales",
-    value: "$1,842.30",
-    change: "+12.4%",
-    icon: ShoppingCart,
-  },
-  {
-    label: "Pending Settlement",
-    value: "$6,210.00",
-    change: "3 days",
-    icon: Clock,
-  },
-  {
-    label: "Orders Shipped",
-    value: "47",
-    change: "+8 today",
-    icon: PackageCheck,
-  },
-  {
-    label: "Next Payout",
-    value: "$3,105.00",
-    change: "Tomorrow",
-    icon: CalendarClock,
-  },
-];
-
-const recentAdvances = [
-  { date: "Jun 12, 2025", amount: "$2,500.00", status: "Repaid" },
-  { date: "Jun 5, 2025", amount: "$3,800.00", status: "Repaid" },
-  { date: "May 28, 2025", amount: "$1,900.00", status: "Repaid" },
-];
+interface DashboardData {
+  availableAdvance: number;
+  advanceLimit: number;
+  feeRate: number;
+  stats: {
+    todaySales: number;
+    todaySalesChange: number;
+    pendingSettlement: number;
+    pendingSettlementDays: number;
+    ordersShipped: number;
+    ordersShippedToday: number;
+    nextPayout: number;
+    nextPayoutDate: string;
+  };
+  recentAdvances: { date: string; amount: number; status: string }[];
+  accountSummary: {
+    totalAdvancedMTD: number;
+    totalRepaidMTD: number;
+    outstandingBalance: number;
+  };
+}
 
 export default function SellerDashboard() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/seller/dashboard")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch dashboard data");
+        return res.json();
+      })
+      .then((data) => {
+        setData(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#0A2E20]/20 border-t-[#0A2E20] rounded-full animate-spin" />
+          <p className="text-sm text-[#1C1B18]/50">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-sm text-red-600">Failed to load dashboard data</p>
+      </div>
+    );
+  }
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+
+  const stats = [
+    { label: "Today's Sales", value: formatCurrency(data.stats.todaySales), change: `+${data.stats.todaySalesChange}%`, icon: ShoppingCart },
+    { label: "Pending Settlement", value: formatCurrency(data.stats.pendingSettlement), change: `${data.stats.pendingSettlementDays} days`, icon: Clock },
+    { label: "Orders Shipped", value: data.stats.ordersShipped.toString(), change: `+${data.stats.ordersShippedToday} today`, icon: PackageCheck },
+    { label: "Next Payout", value: formatCurrency(data.stats.nextPayout), change: data.stats.nextPayoutDate, icon: CalendarClock },
+  ];
+
+  const recentAdvances = data.recentAdvances.map((adv) => ({
+    date: adv.date,
+    amount: formatCurrency(adv.amount),
+    status: adv.status,
+  }));
+
   return (
     <div className="max-w-5xl">
       {/* Header */}
@@ -53,7 +98,7 @@ export default function SellerDashboard() {
           Available Advance
         </p>
         <h1 className="text-5xl sm:text-6xl font-bold text-[#1C1B18] tracking-tight">
-          $4,250.00
+          {formatCurrency(data.availableAdvance)}
         </h1>
         <p className="mt-3 text-sm text-[#1C1B18]/50">
           Based on your trailing 7-day average net sales
@@ -146,31 +191,31 @@ export default function SellerDashboard() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#1C1B18]/50">Total Advanced (MTD)</span>
               <span className="text-sm font-semibold text-[#1C1B18]">
-                $12,450.00
+                {formatCurrency(data.accountSummary.totalAdvancedMTD)}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#1C1B18]/50">Total Repaid (MTD)</span>
               <span className="text-sm font-semibold text-[#1C1B18]">
-                $8,200.00
+                {formatCurrency(data.accountSummary.totalRepaidMTD)}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#1C1B18]/50">Outstanding Balance</span>
               <span className="text-sm font-semibold text-[#1C1B18]">
-                $4,250.00
+                {formatCurrency(data.accountSummary.outstandingBalance)}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-[#1C1B18]/50">Fee Rate</span>
-              <span className="text-sm font-semibold text-[#1C1B18]">1.5%</span>
+              <span className="text-sm font-semibold text-[#1C1B18]">{data.feeRate}%</span>
             </div>
             <div className="pt-3 border-t border-[#1C1B18]/5 flex items-center justify-between">
               <span className="text-sm text-[#1C1B18]/50">
                 Advance Limit
               </span>
               <span className="text-sm font-bold text-[#0A2E20]">
-                $10,000.00
+                {formatCurrency(data.advanceLimit)}
               </span>
             </div>
           </div>

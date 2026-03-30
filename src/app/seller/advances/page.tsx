@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,119 +14,17 @@ import {
   ChevronDown,
 } from "lucide-react";
 
-// Mock data for advances
-const advances = [
-  {
-    id: "ADV-001",
-    date: "Jun 12, 2025",
-    amount: 2500.0,
-    fee: 37.5,
-    net: 2462.5,
-    sales: 3125.0,
-    status: "Repaid",
-    settledDate: "Jun 26, 2025",
-    daysToSettle: 14,
-  },
-  {
-    id: "ADV-002",
-    date: "Jun 11, 2025",
-    amount: 1800.0,
-    fee: 27.0,
-    net: 1773.0,
-    sales: 2250.0,
-    status: "Repaid",
-    settledDate: "Jun 25, 2025",
-    daysToSettle: 14,
-  },
-  {
-    id: "ADV-003",
-    date: "Jun 10, 2025",
-    amount: 3200.0,
-    fee: 48.0,
-    net: 3152.0,
-    sales: 4000.0,
-    status: "Repaid",
-    settledDate: "Jun 24, 2025",
-    daysToSettle: 14,
-  },
-  {
-    id: "ADV-004",
-    date: "Jun 9, 2025",
-    amount: 1500.0,
-    fee: 22.5,
-    net: 1477.5,
-    sales: 1875.0,
-    status: "Repaid",
-    settledDate: "Jun 23, 2025",
-    daysToSettle: 14,
-  },
-  {
-    id: "ADV-005",
-    date: "Jun 8, 2025",
-    amount: 2800.0,
-    fee: 42.0,
-    net: 2758.0,
-    sales: 3500.0,
-    status: "Repaid",
-    settledDate: "Jun 22, 2025",
-    daysToSettle: 14,
-  },
-  {
-    id: "ADV-006",
-    date: "Jun 7, 2025",
-    amount: 2100.0,
-    fee: 31.5,
-    net: 2068.5,
-    sales: 2625.0,
-    status: "Repaid",
-    settledDate: "Jun 21, 2025",
-    daysToSettle: 14,
-  },
-  {
-    id: "ADV-007",
-    date: "Jun 6, 2025",
-    amount: 1900.0,
-    fee: 28.5,
-    net: 1871.5,
-    sales: 2375.0,
-    status: "Repaid",
-    settledDate: "Jun 20, 2025",
-    daysToSettle: 14,
-  },
-  {
-    id: "ADV-008",
-    date: "Jun 5, 2025",
-    amount: 3800.0,
-    fee: 57.0,
-    net: 3743.0,
-    sales: 4750.0,
-    status: "Repaid",
-    settledDate: "Jun 19, 2025",
-    daysToSettle: 14,
-  },
-  {
-    id: "ADV-009",
-    date: "Jun 4, 2025",
-    amount: 1650.0,
-    fee: 24.75,
-    net: 1625.25,
-    sales: 2062.5,
-    status: "Repaid",
-    settledDate: "Jun 18, 2025",
-    daysToSettle: 14,
-  },
-  {
-    id: "ADV-010",
-    date: "Jun 3, 2025",
-    amount: 2200.0,
-    fee: 33.0,
-    net: 2167.0,
-    sales: 2750.0,
-    status: "Repaid",
-    settledDate: "Jun 17, 2025",
-    daysToSettle: 14,
-  },
-];
+interface Advance {
+  id: string;
+  date: string;
+  amount: number;
+  fee: number;
+  net: number;
+  sales: number;
+  status: string;
+  settledDate: string;
+  daysToSettle: number;
+}
 
 type StatusFilter = "All" | "Repaid" | "Active";
 type DateFilter = "All" | "7D" | "30D" | "90D";
@@ -135,39 +33,35 @@ export default function SellerAdvances() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
   const [dateFilter, setDateFilter] = useState<DateFilter>("All");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedAdvance, setSelectedAdvance] = useState<typeof advances[0] | null>(null);
+  const [selectedAdvance, setSelectedAdvance] = useState<Advance | null>(null);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [advances, setAdvances] = useState<Advance[]>([]);
+  const [totals, setTotals] = useState({ totalAdvanced: 0, totalFees: 0, totalNet: 0 });
+  const [loading, setLoading] = useState(true);
 
-  // Parse date for filtering
-  const parseDate = (dateStr: string) => {
-    const [month, day, year] = dateStr.replace(",", "").split(" ");
-    const monthNum = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].indexOf(month);
-    return new Date(parseInt(year), monthNum, parseInt(day));
-  };
+  useEffect(() => {
+    const fetchAdvances = async () => {
+      const params = new URLSearchParams();
+      if (statusFilter !== "All") params.set("status", statusFilter);
+      if (dateFilter !== "All") params.set("dateRange", dateFilter);
+      if (searchQuery) params.set("search", searchQuery);
 
-  // Filter advances
-  const filteredAdvances = advances.filter((adv) => {
-    if (statusFilter !== "All" && adv.status !== statusFilter) return false;
-    if (searchQuery && !adv.id.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    
-    // Date filter
-    if (dateFilter !== "All") {
-      const advDate = parseDate(adv.date);
-      const now = new Date();
-      const daysDiff = Math.floor((now.getTime() - advDate.getTime()) / (1000 * 60 * 60 * 24));
-      
-      if (dateFilter === "7D" && daysDiff > 7) return false;
-      if (dateFilter === "30D" && daysDiff > 30) return false;
-      if (dateFilter === "90D" && daysDiff > 90) return false;
-    }
-    
-    return true;
-  });
+      try {
+        const res = await fetch(`/api/seller/advances?${params}`);
+        const data = await res.json();
+        setAdvances(data.advances);
+        setTotals(data.totals);
+      } catch (err) {
+        console.error("Failed to fetch advances:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAdvances();
+  }, [statusFilter, dateFilter, searchQuery]);
 
-  // Calculate totals
-  const totalAdvanced = filteredAdvances.reduce((sum, adv) => sum + adv.amount, 0);
-  const totalFees = filteredAdvances.reduce((sum, adv) => sum + adv.fee, 0);
-  const totalNet = filteredAdvances.reduce((sum, adv) => sum + adv.net, 0);
+  // API handles filtering - use advances from API directly
+  const filteredAdvances = advances;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -286,7 +180,7 @@ export default function SellerAdvances() {
             </span>
           </div>
           <p className="text-2xl font-bold text-[#1C1B18] tracking-tight">
-            {formatCurrency(totalAdvanced)}
+            {formatCurrency(totals.totalAdvanced)}
           </p>
         </div>
         <div className="bg-[#EBE8DE] border border-[#1C1B18]/5 rounded-sm p-5">
@@ -297,7 +191,7 @@ export default function SellerAdvances() {
             </span>
           </div>
           <p className="text-2xl font-bold text-[#1C1B18] tracking-tight">
-            {formatCurrency(totalFees)}
+            {formatCurrency(totals.totalFees)}
           </p>
         </div>
         <div className="bg-[#EBE8DE] border border-[#1C1B18]/5 rounded-sm p-5">
@@ -308,7 +202,7 @@ export default function SellerAdvances() {
             </span>
           </div>
           <p className="text-2xl font-bold text-[#0A2E20] tracking-tight">
-            {formatCurrency(totalNet)}
+            {formatCurrency(totals.totalNet)}
           </p>
         </div>
       </div>

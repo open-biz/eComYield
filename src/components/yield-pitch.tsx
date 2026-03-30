@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
+import { ScrollReveal } from "@/components/scroll-animation";
 
 const vaultData = [
   { label: "Pool Duration", value: "14–23 days" },
@@ -10,31 +10,6 @@ const vaultData = [
   { label: "Target APY", value: "8–12%" },
   { label: "Settlement", value: "Solana" },
 ];
-
-function ScrollReveal({ children, className = "", animation = "fade-in-up", style }: { children: React.ReactNode; className?: string; animation?: string; style?: React.CSSProperties }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div ref={ref} className={`animate-on-scroll ${animation} ${isVisible ? "visible" : ""} ${className}`} style={style}>
-      {children}
-    </div>
-  );
-}
 
 export default function YieldPitch() {
   return (

@@ -1,39 +1,48 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
+import { ScrollReveal } from "@/components/scroll-animation";
+import { ConnectWallet } from "@/components/connect-button";
 
 interface HeroSectionProps {
   onConnectStore?: () => void;
   onEarnYield?: () => void;
 }
 
-function ScrollReveal({ children, className = "", animation = "fade-in-up", style }: { children: React.ReactNode; className?: string; animation?: string; style?: React.CSSProperties }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div ref={ref} className={`animate-on-scroll ${animation} ${isVisible ? "visible" : ""} ${className}`} style={style}>
-      {children}
-    </div>
-  );
-}
+const headlineWords = ["Money 9–23 Days.", "Cash Flow Gap.", "Sales Cycle.", "Working Capital."];
 
 export default function HeroSection({ onConnectStore, onEarnYield }: HeroSectionProps) {
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [displayText, setDisplayText] = useState("");
+  const [isTyping, setIsTyping] = useState(true);
+
+  useEffect(() => {
+    const word = headlineWords[currentWordIndex];
+    
+    if (isTyping) {
+      if (displayText.length < word.length) {
+        const timeout = setTimeout(() => {
+          setDisplayText(word.slice(0, displayText.length + 1));
+        }, 80);
+        return () => clearTimeout(timeout);
+      } else {
+        const timeout = setTimeout(() => setIsTyping(false), 2000);
+        return () => clearTimeout(timeout);
+      }
+    } else {
+      if (displayText.length > 0) {
+        const timeout = setTimeout(() => {
+          setDisplayText(displayText.slice(0, -1));
+        }, 40);
+        return () => clearTimeout(timeout);
+      } else {
+        setCurrentWordIndex((prev) => (prev + 1) % headlineWords.length);
+        setIsTyping(true);
+      }
+    }
+  }, [displayText, isTyping, currentWordIndex]);
+
   return (
     <section className="bg-[#F5F3EC] pt-32 pb-24 px-8 md:px-16">
       {/* Tag */}
@@ -43,12 +52,15 @@ export default function HeroSection({ onConnectStore, onEarnYield }: HeroSection
         </span>
       </ScrollReveal>
 
-      {/* Headline */}
+      {/* Headline with typing animation */}
       <ScrollReveal animation="fade-in-up" className="mb-8">
         <h1 className="text-[12vw] md:text-8xl lg:text-9xl font-semibold tracking-tighter leading-[0.85] text-[#1C1B18] text-balance">
           Amazon Holds Your
           <br />
-          Money 9–23 Days.
+          <span className="inline-block min-w-[10ch]">
+            {displayText}
+            <span className="animate-pulse inline-block w-[0.1em] ml-1 bg-[#1C1B18] align-middle" />
+          </span>
         </h1>
       </ScrollReveal>
 
@@ -68,12 +80,7 @@ export default function HeroSection({ onConnectStore, onEarnYield }: HeroSection
           Connect Amazon Store
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </button>
-        <button
-          onClick={onEarnYield}
-          className="inline-flex items-center gap-3 bg-transparent text-[#1C1B18] border-2 border-[#1C1B18] px-10 py-6 text-lg font-medium rounded-none hover:bg-[#EBE8DE] transition-colors"
-        >
-          Earn Yield
-        </button>
+        <ConnectWallet variant="secondary" />
       </ScrollReveal>
     </section>
   );

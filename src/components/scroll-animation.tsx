@@ -7,12 +7,14 @@ interface ScrollAnimationProps {
   animation?: "fade-in-up" | "fade-in-left" | "fade-in-right" | "scale-in";
   className?: string;
   delay?: number;
+  style?: React.CSSProperties;
 }
 
 export function ScrollAnimation({
   children,
   animation = "fade-in-up",
   className = "",
+  style,
 }: ScrollAnimationProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -42,6 +44,7 @@ export function ScrollAnimation({
     <div
       ref={ref}
       className={`animate-on-scroll ${animation} ${isVisible ? "visible" : ""} ${className}`}
+      style={style}
     >
       {children}
     </div>
@@ -53,12 +56,14 @@ interface ScrollRevealProps {
   children: React.ReactNode;
   className?: string;
   animation?: "fade-in-up" | "fade-in-left" | "fade-in-right" | "scale-in";
+  style?: React.CSSProperties;
 }
 
 export function ScrollReveal({
   children,
   className = "",
   animation = "fade-in-up",
+  style,
 }: ScrollRevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -87,7 +92,8 @@ export function ScrollReveal({
   return (
     <div
       ref={ref}
-      className={`animate-on-scroll ${animation} ${className}`}
+      className={`animate-on-scroll ${animation} ${isVisible ? "visible" : ""} ${className}`}
+      style={style}
     >
       {children}
     </div>

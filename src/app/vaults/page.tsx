@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useAccount } from "wagmi";
 import {
   Vault,
   TrendingUp,
@@ -7,37 +9,76 @@ import {
   ArrowUpRight,
   CircleDollarSign,
   Info,
-  ChevronRight,
 } from "lucide-react";
+import { ConnectWallet } from "@/components/connect-button";
 
-const stats = [
-  {
-    label: "Total Value Locked",
-    value: "$12,840,000",
-    change: "+4.2%",
-    icon: Vault,
-  },
-  {
-    label: "Current APY",
-    value: "9.74%",
-    change: "+0.31%",
-    icon: TrendingUp,
-  },
-  {
-    label: "Pool Utilization",
-    value: "87.3%",
-    change: "+1.8%",
-    icon: Activity,
-  },
-  {
-    label: "Active Advances",
-    value: "214",
-    change: "+12",
-    icon: ArrowUpRight,
-  },
-];
+interface VaultData {
+  vault: { name: string; status: string; epoch: number; epochTimeRemaining: string };
+  stats: {
+    totalValueLocked: number;
+    tvlChange: number;
+    currentAPY: number;
+    apyChange: number;
+    poolUtilization: number;
+    utilizationChange: number;
+    activeAdvances: number;
+    activeAdvancesChange: number;
+  };
+  parameters: { label: string; value: string }[];
+  userPosition: { deposited: number | null; earnedYield: number | null; walletConnected: boolean };
+  recentActivity: { action: string; amount: number; wallet: string; time: string }[];
+}
 
 export default function VaultsPage() {
+  const { isConnected, address } = useAccount();
+  const [data, setData] = useState<VaultData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // In production, pass wallet address to fetch user position
+    fetch("/api/vaults")
+      .then((res) => res.json())
+      .then((data) => {
+        // Update user position based on wallet connection
+        if (isConnected && address) {
+          // Mock user position - in production would come from API
+          data.userPosition = {
+            deposited: 10000,
+            earnedYield: 245.50,
+            walletConnected: true,
+          };
+        }
+        setData(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [isConnected, address]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#0A2E20]/20 border-t-[#0A2E20] rounded-full animate-spin" />
+          <p className="text-sm text-[#1C1B18]/50">Loading vault data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return <div className="text-sm text-red-600">Failed to load vault data</div>;
+  }
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(amount);
+
+  const stats = [
+    { label: "Total Value Locked", value: formatCurrency(data.stats.totalValueLocked), change: `+${data.stats.tvlChange}%`, icon: Vault },
+    { label: "Current APY", value: `${data.stats.currentAPY}%`, change: `+${data.stats.apyChange}%`, icon: TrendingUp },
+    { label: "Pool Utilization", value: `${data.stats.poolUtilization}%`, change: `+${data.stats.utilizationChange}%`, icon: Activity },
+    { label: "Active Advances", value: data.stats.activeAdvances.toString(), change: `+${data.stats.activeAdvancesChange}`, icon: ArrowUpRight },
+  ];
+
   return (
     <div className="space-y-10">
       {/* Header */}
@@ -45,14 +86,14 @@ export default function VaultsPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center rounded-sm border border-[#0A2E20]/20 bg-[#0A2E20]/5 px-2 py-0.5 text-xs font-medium tracking-widest text-[#0A2E20] uppercase">
-              Live
+              {data.vault.status}
             </span>
             <span className="text-xs tracking-wide text-[#1C1B18]/50">
-              Epoch 47 · 6d 14h remaining
+              Epoch {data.vault.epoch} · {data.vault.epochTimeRemaining} remaining
             </span>
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-[#1C1B18] lg:text-4xl">
-            AMZN-USDC Receivables Vault
+            {data.vault.name}
           </h1>
           <p className="max-w-xl text-sm leading-relaxed text-[#1C1B18]/60">
             Institutional-grade yield from tokenized Amazon seller receivables.
@@ -105,14 +146,7 @@ export default function VaultsPage() {
             Vault Parameters
           </h2>
           <div className="space-y-0">
-            {[
-              { label: "Underlying Asset", value: "Amazon Seller Receivables" },
-              { label: "Settlement Token", value: "USDC (Solana)" },
-              { label: "Lock Period", value: "14 Days Rolling" },
-              { label: "Min. Deposit", value: "1,000 USDC" },
-              { label: "Risk Tranche", value: "Senior" },
-              { label: "Collateral Ratio", value: "125%" },
-            ].map((row, i) => (
+            {data.parameters.map((row, i) => (
               <div
                 key={row.label}
                 className={`flex items-center justify-between py-3 ${
@@ -137,25 +171,30 @@ export default function VaultsPage() {
             <div className="space-y-1">
               <span className="text-xs text-[#1C1B18]/50">Deposited</span>
               <p className="text-2xl font-bold tracking-tight text-[#1C1B18]">
-                — USDC
+                {data.userPosition.deposited ? formatCurrency(data.userPosition.deposited) : '—'} USDC
               </p>
             </div>
             <div className="space-y-1">
               <span className="text-xs text-[#1C1B18]/50">Earned Yield</span>
-              <p className="text-lg font-bold text-[#0A2E20]">— USDC</p>
+              <p className="text-lg font-bold text-[#0A2E20]">{data.userPosition.earnedYield ? formatCurrency(data.userPosition.earnedYield) : '—'} USDC</p>
             </div>
-            <div className="h-px bg-[#1C1B18]/10" />
-            <div className="flex items-start gap-2 rounded-sm bg-[#F5F3EC] p-3">
-              <Info size={14} className="mt-0.5 shrink-0 text-[#1C1B18]/40" />
-              <p className="text-xs leading-relaxed text-[#1C1B18]/50">
-                Connect your Solana wallet to view your position and deposit
-                into this vault.
-              </p>
-            </div>
-            <button className="flex w-full items-center justify-center gap-2 rounded-none border border-[#1C1B18]/15 bg-[#F5F3EC] px-5 py-3 text-sm font-medium text-[#1C1B18] transition-colors hover:bg-[#1C1B18]/5">
-              Connect Wallet
-              <ChevronRight size={14} />
-            </button>
+            {isConnected ? (
+              <button className="flex w-full items-center justify-center gap-2 rounded-none bg-[#0A2E20] px-5 py-3 text-sm font-medium text-[#F5F3EC] transition-colors hover:opacity-90">
+                <CircleDollarSign size={16} />
+                Deposit USDC
+              </button>
+            ) : (
+              <>
+                <div className="flex items-start gap-2 rounded-sm bg-[#F5F3EC] p-3">
+                  <Info size={14} className="mt-0.5 shrink-0 text-[#1C1B18]/40" />
+                  <p className="text-xs leading-relaxed text-[#1C1B18]/50">
+                    Connect your wallet to view your position and deposit
+                    into this vault.
+                  </p>
+                </div>
+                <ConnectWallet />
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -168,38 +207,7 @@ export default function VaultsPage() {
           </h2>
         </div>
         <div className="divide-y divide-[#1C1B18]/5 bg-[#F5F3EC]">
-          {[
-            {
-              action: "Deposit",
-              amount: "+25,000 USDC",
-              wallet: "8xK2…mP4d",
-              time: "12 min ago",
-            },
-            {
-              action: "Advance Funded",
-              amount: "−18,400 USDC",
-              wallet: "Protocol",
-              time: "34 min ago",
-            },
-            {
-              action: "Repayment",
-              amount: "+19,122 USDC",
-              wallet: "Seller #1847",
-              time: "1h ago",
-            },
-            {
-              action: "Deposit",
-              amount: "+50,000 USDC",
-              wallet: "3nYq…vR7w",
-              time: "2h ago",
-            },
-            {
-              action: "Yield Distributed",
-              amount: "+2,841 USDC",
-              wallet: "Epoch 46",
-              time: "6h ago",
-            },
-          ].map((row, i) => (
+          {data.recentActivity.map((row, i) => (
             <div
               key={i}
               className="flex items-center justify-between px-6 py-3.5"
@@ -207,15 +215,13 @@ export default function VaultsPage() {
               <div className="flex items-center gap-4">
                 <span
                   className={`inline-flex w-28 items-center text-xs font-medium tracking-wide ${
-                    row.action === "Deposit" || row.action === "Repayment" || row.action === "Yield Distributed"
-                      ? "text-[#0A2E20]"
-                      : "text-[#1C1B18]/60"
+                    row.amount > 0 ? "text-[#0A2E20]" : "text-[#1C1B18]/60"
                   }`}
                 >
                   {row.action}
                 </span>
                 <span className="text-sm font-medium text-[#1C1B18]">
-                  {row.amount}
+                  {row.amount > 0 ? "+" : ""}{formatCurrency(row.amount)}
                 </span>
               </div>
               <div className="hidden items-center gap-6 sm:flex">
